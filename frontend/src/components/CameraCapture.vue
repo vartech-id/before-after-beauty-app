@@ -1,0 +1,141 @@
+<script setup>
+import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+
+// ---------------------------------------------------------------------
+// Konfigurasi endpoint backend
+// ---------------------------------------------------------------------
+const API_BASE = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000'
+
+const LIVEVIEW_ENDPOINT = `${API_BASE}/api/camera/liveview`
+const CAPTURE_ENDPOINT  = `${API_BASE}/api/camera/capture`
+
+// ---------------------------------------------------------------------
+// State
+// ---------------------------------------------------------------------
+const hasPhoto = ref(false)
+const photoUrl = ref(null)
+
+const liveTick = ref(0)
+let liveIntervalId = null
+
+const liveViewUrl = computed(() => {
+  return `${LIVEVIEW_ENDPOINT}?_=${liveTick.value}`
+})
+
+// ---------------------------------------------------------------------
+// Fungsi kontrol kamera
+// ---------------------------------------------------------------------
+const startCamera = () => {
+  hasPhoto.value = false
+  photoUrl.value = null
+
+  if (!liveIntervalId) {
+    liveIntervalId = setInterval(() => {
+      liveTick.value++
+    }, 500)
+  }
+}
+
+const stopCamera = () => {
+  if (liveIntervalId) {
+    clearInterval(liveIntervalId)
+    liveIntervalId = null
+  }
+}
+
+const takePhoto = async () => {
+  try {
+    stopCamera()
+
+    const res = await fetch(CAPTURE_ENDPOINT, {
+      method: 'POST',
+    })
+
+    if (!res.ok) {
+      throw new Error(`Capture failed: ${res.status}`)
+    }
+
+    const data = await res.json()
+    photoUrl.value = data.photo_url
+    hasPhoto.value = true
+  } catch (err) {
+    console.error('Error capture:', err)
+    alert('Gagal capture foto. Coba lagi.')
+    startCamera()
+  }
+}
+
+const retakeCamera = () => {
+  photoUrl.value = null
+  hasPhoto.value = false
+  startCamera()
+}
+
+// ---------------------------------------------------------------------
+// Lifecycle
+// ---------------------------------------------------------------------
+onMounted(() => {
+  startCamera()
+})
+
+onBeforeUnmount(() => {
+  stopCamera()
+})
+</script>
+
+<template>
+  <div>
+    <!-- Frame untuk live view / hasil foto -->
+    <div class="camera-frame">
+      <!-- Jika belum ada foto: tampilkan live view -->
+      <img
+        v-if="!hasPhoto"
+        :src="liveViewUrl"
+        alt="Live view"
+        class="camera-image"
+      />
+
+      <!-- Jika sudah ada foto: tampilkan hasil capture -->
+      <img
+        v-else-if="photoUrl"
+        :src="photoUrl"
+        alt="Captured photo"
+        class="camera-image"
+      />
+
+      <p v-else>Tidak ada foto.</p>
+    </div>
+
+    <!-- Tombol -->
+    <button
+      v-if="!hasPhoto"
+      class="btn"
+      @click="takePhoto"
+    >
+      Capture &amp; Upload
+    </button>
+
+    <button
+      v-else
+      class="btn btn-secondary"
+      @click="retakeCamera"
+    >
+      Retake
+    </button>
+  </div>
+</template>
+
+<style scoped>
+.camera-frame {
+  max-width: 640px;   /* batasi lebar supaya tidak terlalu besar */
+  width: 100%;
+  margin: 0 auto;     /* center di tengah container */
+}
+
+/* Pastikan rasio gambar terjaga, tidak gepeng */
+.camera-image {
+  display: block;
+  width: 100%;        /* isi lebar frame */
+  height: auto;       /* tinggi mengikuti rasio asli gambar */
+}
+</style>
