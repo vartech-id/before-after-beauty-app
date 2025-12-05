@@ -27,18 +27,11 @@ const handleFinish = () => {
 
 <template>
   <h1>this is result page</h1>
-  <div class="processing-wrapper">
-    <div v-if="capturedPhotoUrl" class="photo-wrapper">
-      <img
-        :src="capturedPhotoUrl"
-        alt="Captured photo"
-        class="photo"
-      />
-    </div>
-    <p v-else>
-      Tidak ada foto. Silakan kembali dan ambil foto terlebih dahulu.
-    </p>
-  </div>
+  <img :src="state.photoUrl" alt="Before" />
+  <img :src="state.resultPhotoUrl" alt="After" />
+  <button @click="handleFinish">Home</button>
 </template>
 
-<style scoped></style>
+<style scoped>
+
+</style>

@@ -32,6 +32,8 @@ DIGICAM_BASE_URL = os.getenv("DIGICAM_BASE_URL", "http://127.0.0.1:5513")
 DIGICAM_PREVIEW_PATH = os.getenv("DIGICAM_PREVIEW_PATH", "/liveview.jpg")
 DIGICAM_CAPTURE_CMD = os.getenv("DIGICAM_CAPTURE_CMD", "/?CMD=Capture")
 
+PREDICTOR_PATH = BASE_DIR / "shape_predictor_68_face_landmarks.dat"
+
 # CORS: asal frontend yang diizinkan akses API
 FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",

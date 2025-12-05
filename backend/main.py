@@ -5,6 +5,7 @@ from fastapi.staticfiles import StaticFiles
 
 from backend.config import FRONTEND_ORIGINS, STATIC_DIR
 from backend.api.camera import router as camera_router
+from backend.api.routes import router as beauty_router   # 🔥 tambahkan ini
 
 app = FastAPI()
 
@@ -19,8 +20,9 @@ app.add_middleware(
 # Serve /static -> backend/static
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-app.include_router(camera_router)
-
+# 🔥 daftar kedua router
+app.include_router(camera_router)   # /api/camera/...
+app.include_router(beauty_router)   # /api/beauty
 
 @app.get("/health")
 def health_check():
