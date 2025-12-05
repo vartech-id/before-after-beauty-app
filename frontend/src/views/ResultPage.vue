@@ -1,9 +1,23 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useSession } from "../stores/useSession";
+import { computed } from "vue";
+import { onMounted } from "vue";
 
 const router = useRouter();
-const { clearSession } = useSession();
+const { state,clearSession } = useSession();
+const capturedPhotoUrl = computed(() => state.photoUrl)
+
+onMounted(() => {
+  // Safety: kalau belum pilih product atau belum capture foto, balikin
+  if (!state.selectedProduct || !state.photoUrl) {
+    router.push({ name: 'PhotoSession' })
+  }
+
+  // NANTI: di sini kamu bisa panggil FastAPI untuk apply filter
+  // begitu selesai, router.push({ name: 'ResultPage' })
+})
+
 
 const handleFinish = () => {
   clearSession(); // reset pilihan & data sesi
@@ -13,9 +27,17 @@ const handleFinish = () => {
 
 <template>
   <h1>this is result page</h1>
-  <div class="result">
-    <!-- tampilkan foto hasil, dll -->
-    <button @click="handleFinish">Selesai / Mulai Sesi Baru</button>
+  <div class="processing-wrapper">
+    <div v-if="capturedPhotoUrl" class="photo-wrapper">
+      <img
+        :src="capturedPhotoUrl"
+        alt="Captured photo"
+        class="photo"
+      />
+    </div>
+    <p v-else>
+      Tidak ada foto. Silakan kembali dan ambil foto terlebih dahulu.
+    </p>
   </div>
 </template>
 

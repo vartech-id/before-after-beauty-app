@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount } from 'vue'
+import { useSession } from '../stores/useSession'
 
 // ---------------------------------------------------------------------
 // Konfigurasi endpoint backend
@@ -12,6 +13,7 @@ const CAPTURE_ENDPOINT  = `${API_BASE}/api/camera/capture`
 // ---------------------------------------------------------------------
 // State
 // ---------------------------------------------------------------------
+const { state } = useSession() 
 const hasPhoto = ref(false)
 const photoUrl = ref(null)
 
@@ -28,6 +30,7 @@ const liveViewUrl = computed(() => {
 const startCamera = () => {
   hasPhoto.value = false
   photoUrl.value = null
+  state.photoUrl = null              // 🔥 reset juga di session
 
   if (!liveIntervalId) {
     liveIntervalId = setInterval(() => {
@@ -47,17 +50,18 @@ const takePhoto = async () => {
   try {
     stopCamera()
 
-    const res = await fetch(CAPTURE_ENDPOINT, {
-      method: 'POST',
-    })
-
-    if (!res.ok) {
-      throw new Error(`Capture failed: ${res.status}`)
-    }
+    const res = await fetch(CAPTURE_ENDPOINT, { method: 'POST' })
+    if (!res.ok) throw new Error(`Capture failed: ${res.status}`)
 
     const data = await res.json()
+
+    // URL dari backend
     photoUrl.value = data.photo_url
     hasPhoto.value = true
+
+    // 🔥 SIMPAN ke session supaya halaman lain bisa pakai
+    state.photoUrl = data.photo_url
+
   } catch (err) {
     console.error('Error capture:', err)
     alert('Gagal capture foto. Coba lagi.')
@@ -65,22 +69,20 @@ const takePhoto = async () => {
   }
 }
 
+
 const retakeCamera = () => {
   photoUrl.value = null
   hasPhoto.value = false
+  state.photoUrl = null              // 🔥 reset di session juga
   startCamera()
 }
 
 // ---------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------
-onMounted(() => {
-  startCamera()
-})
+onMounted(startCamera)
+onBeforeUnmount(stopCamera)
 
-onBeforeUnmount(() => {
-  stopCamera()
-})
 </script>
 
 <template>
@@ -114,7 +116,6 @@ onBeforeUnmount(() => {
     >
       Capture &amp; Upload
     </button>
-
     <button
       v-else
       class="btn btn-secondary"

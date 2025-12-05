@@ -15,7 +15,7 @@ const filterCode = computed(() => {
 
 function clearSession() {
   state.selectedProduct = null
-  state.photoPath = null
+  state.photoUrl = null     // reset juga fotonya
 }
 
 export function useSession() {

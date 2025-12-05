@@ -10,6 +10,10 @@ import loading_C from './assets/LoadingAnimation/loading-c.gif'
 
 const router = useRouter();
 const { state, filterCode } = useSession();
+
+// URL foto hasil capture
+const capturedPhotoUrl = computed(() => state.photoUrl)
+
 // pilih image loading berdasarkan filter
 const loadingImage = computed(() => {
   switch (filterCode.value) {
@@ -24,36 +28,71 @@ const loadingImage = computed(() => {
   }
 })
 
-// onMounted(async () => {
-//   if (!filterCode.value || !state.photoPath) {
-//     // kalau nggak ada data sesi, balikkan user
-//     router.push({ name: "ProductSelections" });
-//     return;
-//   }
+onMounted(() => {
+  // Safety: kalau belum pilih product atau belum capture foto, balikin
+  if (!state.selectedProduct || !state.photoUrl) {
+    router.push({ name: 'PhotoSession' })
+  }
 
-//   // contoh kirim ke FastAPI
-//   await fetch("http://localhost:8000/api/apply-filter", {
-//     method: "POST",
-//     headers: { "Content-Type": "application/json" },
-//     body: JSON.stringify({
-//       filter: filterCode.value, // 'MENCERAHKAN_KULIT', dll
-//       photo_path: state.photoPath, // atau data lain yg kamu simpan
-//     }),
-//   });
+  // NANTI: di sini kamu bisa panggil FastAPI untuk apply filter
+  // begitu selesai, router.push({ name: 'ResultPage' })
+})
 
-//   router.push({ name: "ResultPage" });
-// });
-
-const goNext = () => router.push({ name: "ResultPage" });
+const handleNext = () => {
+  router.push({name:'ResultPage'})
+}
 </script>
 
 <template>
-  <h1>Processing Session</h1>
-  <div class="processing">
-    <img :src="loadingImage" alt="Loading..." />
-    <p>Mohon tunggu, sedang memproses foto Anda...</p>
+  <div class="processing-wrapper">
+    <div v-if="capturedPhotoUrl" class="photo-wrapper">
+      <img
+        :src="capturedPhotoUrl"
+        alt="Captured photo"
+        class="photo"
+      />
+    </div>
+    <p v-else>
+      Tidak ada foto. Silakan kembali dan ambil foto terlebih dahulu.
+    </p>
+    <div class="loading-wrapper">
+      <img
+        :src="loadingImage"
+        alt="Processing..."
+        class="overlay-gif"
+      />
+    </div>
+    <button @click="handleNext">
+      next
+    </button>
   </div>
-  <button @click="goNext">Next</button>
 </template>
 
-<style scoped></style>
+<style scoped>
+.processing-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.photo-wrapper {
+  position: relative;
+  max-width: 640px;
+  width: 100%;
+}
+
+.photo {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.overlay-gif {
+  position: absolute;
+  left: 20em;
+  top: 0em;
+  width: 30%;
+  pointer-events: none;
+}
+</style>
