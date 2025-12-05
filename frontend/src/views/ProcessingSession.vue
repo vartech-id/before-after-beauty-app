@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import { useSession } from "../stores/useSession";
 
 import loading_A from "./assets/LoadingAnimation/loading-a.gif";
@@ -11,6 +11,14 @@ const router = useRouter();
 const { state, filterCode } = useSession();
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
+// ====== CONFIG: minimal waktu user lihat loading (ms) ======
+const MS = 1000;
+const MIN_LOADING_S = MS * 13; // ubah ke detik
+
+// status
+const processingDone = ref(false);
+const minTimePassed = ref(false);
 
 // URL foto hasil capture (BEFORE)
 const capturedPhotoUrl = computed(() => state.photoUrl);
@@ -39,9 +47,16 @@ const loadingImage = computed(() => {
     case "MELEMBABKAN_KULIT":
       return loading_C;
     default:
-      return loading_A; // fallback
+      return loading_A;
   }
 });
+
+// helper: cek kapan boleh pindah ke ResultPage
+const maybeGoNext = () => {
+  if (processingDone.value && minTimePassed.value) {
+    router.push({ name: "ResultPage" });
+  }
+};
 
 onMounted(async () => {
   if (!state.photoUrl || !presetName.value) {
@@ -49,17 +64,21 @@ onMounted(async () => {
     return;
   }
 
+  // ---- 1) timer minimal loading ----
+  setTimeout(() => {
+    minTimePassed.value = true;
+    maybeGoNext();
+  }, MIN_LOADING_S);
+
+  // ---- 2) proses ke backend ----
   try {
-    // 1. Ambil foto BEFORE yang sudah disimpan di static (hasil /capture)
     const imgRes = await fetch(state.photoUrl);
     const imgBlob = await imgRes.blob();
 
-    // 2. Siapkan FormData untuk /api/beauty
     const formData = new FormData();
     formData.append("image", imgBlob, "captured.jpg");
-    formData.append("preset", presetName.value); // 'cerah' / 'lembab' / 'kerutan'
+    formData.append("preset", presetName.value);
 
-    // 3. Kirim ke backend
     const res = await fetch(`${API_BASE}/api/beauty`, {
       method: "POST",
       body: formData,
@@ -71,14 +90,13 @@ onMounted(async () => {
       return;
     }
 
-    // 4. Terima gambar AFTER
     const outBlob = await res.blob();
     const outUrl = URL.createObjectURL(outBlob);
 
     state.resultPhotoUrl = outUrl;
 
-    // 5. Pindah ke halaman hasil
-    router.push({ name: "ResultPage" });
+    processingDone.value = true;
+    maybeGoNext();
   } catch (err) {
     console.error("Error processing beauty:", err);
     alert("Terjadi error saat memproses foto.");

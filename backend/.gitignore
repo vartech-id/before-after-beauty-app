@@ -25,3 +25,8 @@ dist-ssr
 
 venv
 __pycache__
+
+# Ignore semua file hasil foto
+static/photos/*
+# Tapi tetap simpan file placeholder (kalau kamu pakai)
+!static/photos/.gitkeep
