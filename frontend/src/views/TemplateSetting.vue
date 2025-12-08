@@ -50,6 +50,8 @@ const saveStatus = ref("");
 
 function saveTemplate() {
   const payload = {
+    overlayEnabled: overlayEnabled.value,
+    overlaySrc: overlaySrc.value,
     overlayRel: overlayRel.value,
     photo1Rel: photo1Rel.value,
     photo2Rel: photo2Rel.value,
@@ -74,6 +76,14 @@ onMounted(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
+
+    if (typeof data.overlayEnabled === "boolean") {
+      overlayEnabled.value = data.overlayEnabled;
+    }
+
+    if (data.overlaySrc) {
+      setOverlayFromSrc(data.overlaySrc);
+    }
 
     if (data.overlayRel) {
       overlayRel.value = { ...overlayRel.value, ...data.overlayRel };
@@ -102,21 +112,33 @@ const overlayRel = ref({
 });
 
 const overlayEnabled = ref(true);
+const overlaySrc = ref(null); // data URL overlay agar bisa di-reuse di ResultPage
 const overlayImage = ref(null); // HTMLImageElement dari upload
 
-function onOverlayFileChange(e) {
-  const file = e.target.files?.[0];
-  if (!file) return;
-  const url = URL.createObjectURL(file);
+function setOverlayFromSrc(src) {
+  if (!src) return;
+  overlaySrc.value = src;
   const img = new Image();
   img.onload = () => {
     overlayImage.value = img;
   };
-  img.src = url;
+  img.src = src;
+}
+
+function onOverlayFileChange(e) {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => {
+    const dataUrl = ev.target?.result;
+    if (!dataUrl || typeof dataUrl !== "string") return;
+    setOverlayFromSrc(dataUrl);
+  };
+  reader.readAsDataURL(file);
 }
 
 const overlayImageConfig = computed(() => {
-  if (!overlayImage.value) return null;
+  if (!overlayEnabled.value || !overlayImage.value) return null;
   const s = previewScale.value;
   const w = canvasWidthPx;
   const h = canvasHeightPx;

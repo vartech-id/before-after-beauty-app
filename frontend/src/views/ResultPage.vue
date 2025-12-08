@@ -13,6 +13,8 @@ const canvasHeightPx = 3600;
 const previewMaxWidth = 520; // ubah angka ini kalau preview terlalu besar/kecil
 
 const defaultLayout = () => ({
+  overlayEnabled: true,
+  overlaySrc: null,
   overlayRel: { x: 0.05, y: 0.05, w: 0.9, h: 0.9 },
   photo1Rel: { x: 0.1, y: 0.14, w: 0.8, h: 0.3 },
   photo2Rel: { x: 0.1, y: 0.56, w: 0.8, h: 0.3 },
@@ -48,6 +50,11 @@ const loadTemplateLayout = () => {
       overlayRel: { ...defaults.overlayRel, ...(parsed.overlayRel || {}) },
       photo1Rel: { ...defaults.photo1Rel, ...(parsed.photo1Rel || {}) },
       photo2Rel: { ...defaults.photo2Rel, ...(parsed.photo2Rel || {}) },
+      overlayEnabled:
+        typeof parsed.overlayEnabled === "boolean"
+          ? parsed.overlayEnabled
+          : defaults.overlayEnabled,
+      overlaySrc: parsed.overlaySrc || defaults.overlaySrc,
     };
   } catch (err) {
     console.warn("Failed to load saved template, using defaults", err);
@@ -74,7 +81,11 @@ const handleFinish = () => {
   <div class="resultPage">
     <div class="resultWrapper">
       <div class="layoutCanvas" :style="canvasStyle">
-        <div class="overlayFrame" :style="overlayStyle"></div>
+        <div
+          v-if="templateLayout.overlayEnabled"
+          class="overlayFrame"
+          :style="overlayStyle"
+        ></div>
 
         <div class="slot beforeSlot" :style="beforeSlotStyle">
           <img v-if="state.photoUrl" :src="state.photoUrl" alt="Before" />
@@ -89,6 +100,14 @@ const handleFinish = () => {
           />
           <span class="slotLabel">After</span>
         </div>
+
+        <img
+          v-if="templateLayout.overlayEnabled && templateLayout.overlaySrc"
+          :src="templateLayout.overlaySrc"
+          class="overlayImage"
+          :style="overlayStyle"
+          alt="Overlay"
+        />
       </div>
     </div>
 
@@ -121,15 +140,24 @@ const handleFinish = () => {
   max-width: 100%;
   aspect-ratio: 2400 / 3600;
   overflow: hidden;
-  border: 1px solid red;
+  background: radial-gradient(circle at 20% 20%, #1f2937 0, #0b1020 55%);
+  border: 1px solid #1f2937;
 }
 
 .overlayFrame {
   position: absolute;
+  z-index: 4;
   border: 1px dashed rgba(148, 163, 184, 0.8);
   border-radius: 10px;
   pointer-events: none;
   background: rgba(255, 255, 255, 0.02);
+}
+
+.overlayImage {
+  position: absolute;
+  z-index: 5;
+  object-fit: fill;
+  pointer-events: none;
 }
 
 .slot {
