@@ -14,18 +14,6 @@ const filterCode = computed(() => {
   return null
 })
 
-const presetName = computed(() => {
-  switch (filterCode.value) {
-    case 'MENCERAHKAN_KULIT':
-      return 'cerah'     // 🔥 cocokin dengan PRESET_CONFIGS backend
-    case 'MELEMBABKAN_KULIT':
-      return 'lembab'
-    case 'MENGURANGI_KERIPUT':
-      return 'kerutan'
-    default:
-      return 'cerah'
-  }
-})
 
 function clearSession() {
   state.selectedProduct = null

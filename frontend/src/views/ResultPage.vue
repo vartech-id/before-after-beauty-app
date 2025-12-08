@@ -2,9 +2,12 @@
 import { useRouter } from "vue-router";
 import { useSession } from "../stores/useSession";
 import { computed, onMounted, ref } from "vue";
+import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png";
+import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png";
+import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png";
 
 const router = useRouter();
-const { state, clearSession } = useSession();
+const { state, clearSession, filterCode } = useSession();
 
 // Canvas mengikuti TemplateSetting.vue
 const STORAGE_KEY = "template_4x6_v1";
@@ -13,6 +16,7 @@ const canvasHeightPx = 3600;
 const previewMaxWidth = 520; // ubah angka ini kalau preview terlalu besar/kecil
 
 const defaultLayout = () => ({
+  overlayMode: "template",
   overlayEnabled: true,
   overlaySrc: null,
   overlayRel: { x: 0.05, y: 0.05, w: 0.9, h: 0.9 },
@@ -38,6 +42,23 @@ const overlayStyle = computed(() => relToStyle(templateLayout.value.overlayRel))
 const beforeSlotStyle = computed(() => relToStyle(templateLayout.value.photo1Rel));
 const afterSlotStyle = computed(() => relToStyle(templateLayout.value.photo2Rel));
 
+const productOverlayMap = {
+  MENCERAHKAN_KULIT: Overlay_Mencerahkan,
+  MENGURANGI_KERIPUT: Overlay_Mengurangi_Keriput,
+  MELEMBABKAN_KULIT: Overlay_Melembabkan,
+};
+
+const overlayImageSrc = computed(() => {
+  if (!templateLayout.value.overlayEnabled) return null;
+  if (templateLayout.value.overlayMode === "logic") {
+    return productOverlayMap[filterCode.value] || null;
+  }
+  if (templateLayout.value.overlayMode === "template") {
+    return templateLayout.value.overlaySrc || null;
+  }
+  return null;
+});
+
 const loadTemplateLayout = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -47,6 +68,7 @@ const loadTemplateLayout = () => {
     const defaults = defaultLayout();
 
     templateLayout.value = {
+      overlayMode: parsed.overlayMode || defaults.overlayMode,
       overlayRel: { ...defaults.overlayRel, ...(parsed.overlayRel || {}) },
       photo1Rel: { ...defaults.photo1Rel, ...(parsed.photo1Rel || {}) },
       photo2Rel: { ...defaults.photo2Rel, ...(parsed.photo2Rel || {}) },
@@ -102,8 +124,8 @@ const handleFinish = () => {
         </div>
 
         <img
-          v-if="templateLayout.overlayEnabled && templateLayout.overlaySrc"
-          :src="templateLayout.overlaySrc"
+          v-if="overlayImageSrc"
+          :src="overlayImageSrc"
           class="overlayImage"
           :style="overlayStyle"
           alt="Overlay"
@@ -140,8 +162,6 @@ const handleFinish = () => {
   max-width: 100%;
   aspect-ratio: 2400 / 3600;
   overflow: hidden;
-  background: radial-gradient(circle at 20% 20%, #1f2937 0, #0b1020 55%);
-  border: 1px solid #1f2937;
 }
 
 .overlayFrame {

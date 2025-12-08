@@ -7,6 +7,10 @@ import loading_A from "./assets/LoadingAnimation/loading-a.gif";
 import loading_B from "./assets/LoadingAnimation/loading-b.gif";
 import loading_C from "./assets/LoadingAnimation/loading-c.gif";
 
+import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png"
+import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png"
+import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png"
+
 const router = useRouter();
 const { state, filterCode } = useSession();
 
@@ -47,9 +51,22 @@ const loadingImage = computed(() => {
     case "MELEMBABKAN_KULIT":
       return loading_C;
     default:
-      return loading_A;
+      return "Error Animation";
   }
 });
+
+const imageOverlay = computed (() => {
+    switch (filterCode.value) {
+    case "MENCERAHKAN_KULIT":
+      return Overlay_Mencerahkan;
+    case "MENGURANGI_KERIPUT":
+      return Overlay_Mengurangi_Keriput;
+    case "MELEMBABKAN_KULIT":
+      return Overlay_Melembabkan;
+    default:
+      return "Error Overlay";
+  }
+})
 
 // helper: cek kapan boleh pindah ke ResultPage
 const maybeGoNext = () => {

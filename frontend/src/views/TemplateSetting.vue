@@ -50,6 +50,7 @@ const saveStatus = ref("");
 
 function saveTemplate() {
   const payload = {
+    overlayMode: overlayMode.value,
     overlayEnabled: overlayEnabled.value,
     overlaySrc: overlaySrc.value,
     overlayRel: overlayRel.value,
@@ -76,6 +77,10 @@ onMounted(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const data = JSON.parse(raw);
+
+    if (typeof data.overlayMode === "string") {
+      overlayMode.value = data.overlayMode;
+    }
 
     if (typeof data.overlayEnabled === "boolean") {
       overlayEnabled.value = data.overlayEnabled;
@@ -111,6 +116,7 @@ const overlayRel = ref({
   h: 0.9,
 });
 
+const overlayMode = ref("template"); // "template" (upload) atau "logic" (ikut produk)
 const overlayEnabled = ref(true);
 const overlaySrc = ref(null); // data URL overlay agar bisa di-reuse di ResultPage
 const overlayImage = ref(null); // HTMLImageElement dari upload
@@ -138,7 +144,8 @@ function onOverlayFileChange(e) {
 }
 
 const overlayImageConfig = computed(() => {
-  if (!overlayEnabled.value || !overlayImage.value) return null;
+  if (!overlayEnabled.value || overlayMode.value !== "template") return null;
+  if (!overlayImage.value) return null;
   const s = previewScale.value;
   const w = canvasWidthPx;
   const h = canvasHeightPx;
@@ -818,12 +825,34 @@ const handleHome = () => {
           <h2 class="section-title">Overlay Image</h2>
 
           <div class="form-group">
+            <label class="radio">
+              <input
+                v-model="overlayMode"
+                type="radio"
+                value="template"
+                name="overlay-mode"
+              />
+              <span>Use template overlay (upload)</span>
+            </label>
+            <label class="radio">
+              <input
+                v-model="overlayMode"
+                type="radio"
+                value="logic"
+                name="overlay-mode"
+              />
+              <span>Use product overlay (logic app)</span>
+            </label>
+          </div>
+
+          <div class="form-group">
             <label for="overlay-file">Upload overlay (PNG/JPG)</label>
             <input
               id="overlay-file"
               type="file"
               accept="image/png,image/jpeg"
               @change="onOverlayFileChange"
+              :disabled="overlayMode === 'logic'"
             />
           </div>
 
@@ -1362,6 +1391,14 @@ select:focus {
   font-size: 11px;
   color: #6b7280;
   margin: 0;
+}
+
+.radio {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  color: #e5e7eb;
 }
 
 /* toggle */
