@@ -1,7 +1,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useSession } from "../stores/useSession";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, ref, watch } from "vue";
 import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png";
 import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png";
 import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png";
@@ -15,7 +15,7 @@ const { state, clearSession, filterCode } = useSession();
 const STORAGE_KEY = "template_4x6_v1";
 const canvasWidthPx = 2400;
 const canvasHeightPx = 3600;
-const previewMaxWidth = 520; // ubah angka ini kalau preview terlalu besar/kecil
+const previewMaxWidth = 520;
 
 const defaultLayout = () => ({
   overlayMode: "template",
@@ -63,6 +63,7 @@ const overlayImageSrc = computed(() => {
 
 const saveStatus = ref("");
 const isSaving = ref(false);
+const autoSaveCompleted = ref(false); // Flag untuk menandai auto save sudah selesai
 
 const loadTemplateLayout = () => {
   try {
@@ -88,26 +89,12 @@ const loadTemplateLayout = () => {
   }
 };
 
-onMounted(() => {
-  // Safety: kalau belum pilih product atau belum capture foto, balikin
-  if (!state.selectedProduct || !state.photoUrl) {
-    router.push({ name: "PhotoSession" });
-    return;
-  }
-
-  loadTemplateLayout();
-});
-
-const handleFinish = () => {
-  clearSession(); // reset pilihan & data sesi
-  router.push({ name: "WelcomeScreen" }); // balik ke awal
-};
-
 const saveResultImage = async () => {
   if (!state.photoUrl || !state.resultAfterUrl) {
     alert("Foto before/after belum tersedia.");
-    return;
+    return false;
   }
+  
   isSaving.value = true;
   saveStatus.value = "";
   try {
@@ -137,10 +124,13 @@ const saveResultImage = async () => {
     }
     const data = await res.json();
     state.resultFinalUrl = data.result_url;
-    saveStatus.value = "Saved to result";
+    saveStatus.value = "Auto-saved to result";
+    autoSaveCompleted.value = true; // Tandai bahwa auto save selesai
+    return true;
   } catch (err) {
     console.error("Save result error:", err);
-    saveStatus.value = "Save failed";
+    saveStatus.value = "Auto-save failed";
+    return false;
   } finally {
     isSaving.value = false;
     setTimeout(() => {
@@ -148,8 +138,33 @@ const saveResultImage = async () => {
     }, 2000);
   }
 };
-</script>
 
+// Fungsi untuk manual save (jika masih diperlukan)
+const manualSaveResultImage = async () => {
+  const success = await saveResultImage();
+  if (success) {
+    saveStatus.value = "Manually saved to result";
+  }
+};
+
+onMounted(async () => {
+  // Safety: kalau belum pilih product atau belum capture foto, balikin
+  if (!state.selectedProduct || !state.photoUrl) {
+    router.push({ name: "PhotoSession" });
+    return;
+  }
+
+  loadTemplateLayout();
+  
+  // Auto save saat halaman dimuat
+  await saveResultImage();
+});
+
+const handleFinish = () => {
+  clearSession(); // reset pilihan & data sesi
+  router.push({ name: "WelcomeScreen" }); // balik ke awal
+};
+</script>
 <template>
   <div class="resultPage">
     <div class="resultWrapper">
@@ -184,11 +199,16 @@ const saveResultImage = async () => {
       </div>
     </div>
 
+    <div class="status-indicator" v-if="isSaving || saveStatus">
+      <span v-if="isSaving">⏳ Saving HD Result...</span>
+      <span v-else class="saveStatus">{{ saveStatus }}</span>
+    </div>
+
     <div class="action-button">
-      <button @click="saveResultImage" :disabled="isSaving">
-        {{ isSaving ? "Saving..." : "Save HD Result" }}
-      </button>
-      <span v-if="saveStatus" class="saveStatus">{{ saveStatus }}</span>
+      <!-- <button @click="manualSaveResultImage" :disabled="isSaving || autoSaveCompleted">
+        {{ isSaving ? "Saving..." : (autoSaveCompleted ? "Already Saved" : "Save HD Result") }}
+      </button> -->
+      <!-- <span v-if="saveStatus && !isSaving" class="saveStatus">{{ saveStatus }}</span> -->
       <button @click="">QR CODE</button>
       <button @click="handleFinish">Home</button>
     </div>
@@ -288,9 +308,29 @@ const saveResultImage = async () => {
   box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
 }
 
+.status-indicator {
+  margin: 10px 0;
+  padding: 8px 16px;
+  background: rgba(59, 130, 246, 0.1);
+  border-radius: 8px;
+  color: #3b82f6;
+  font-size: 14px;
+}
+
+.status-indicator span {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
 .saveStatus {
   font-size: 12px;
-  color: #a5b4fc;
+  color: #10b981; /* Hijau untuk sukses */
 }
+
+.saveStatus.error {
+  color: #ef4444; /* Merah untuk error */
+}
+
 
 </style>

@@ -13,6 +13,14 @@ from backend.models.presets import VALID_PRESETS
 from backend.services.beautify import beautify_image
 from backend.services.storage import save_image_lossless
 
+import qrcode
+from fastapi import APIRouter, Request, status
+from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
+
+from config import LOCAL_FOLDER_PATH, TARGET_FOLDER_ID
+from schemas.drive import DriveFile, TestDriveResponse
+from services import auth_service, drive_service
+
 router = APIRouter(prefix="/api")
 
 
@@ -33,12 +41,9 @@ async def beauty_endpoint(
 
     out_img = beautify_image(img, preset)
 
-    # Simpan hasil filter ke folder after & result (lossless PNG, kualitas asli)
+    # Simpan hasil filter ke folder after saja (lossless PNG, kualitas asli)
     after_filename = save_image_lossless(out_img, AFTER_DIR, prefix="after")
-    result_filename = save_image_lossless(out_img, RESULT_DIR, prefix="result")
-
     after_url = f"{API_BASE_URL.rstrip('/')}/static/after/{after_filename}"
-    result_url = f"{API_BASE_URL.rstrip('/')}/static/result/{result_filename}"
 
     buffer = io.BytesIO()
     out_img.save(buffer, format="JPEG", quality=95)
@@ -49,8 +54,7 @@ async def beauty_endpoint(
         media_type="image/jpeg",
         headers={
           "X-After-Url": after_url,
-          "X-Result-Url": result_url,
-          "Access-Control-Expose-Headers": "X-After-Url, X-Result-Url",
+          "Access-Control-Expose-Headers": "X-After-Url",
         },
     )
 
@@ -163,3 +167,158 @@ def render_result(req: RenderResultRequest):
     result_url = f"{API_BASE_URL.rstrip('/')}/static/result/{filename}"
 
     return JSONResponse({"result_url": result_url})
+
+@router.get("/qr/{file_id}", tags=["QR Code"], response_class=StreamingResponse)
+async def qr_code_generator(file_id: str):
+    """Generate a QR code for a Drive share link."""
+    file_data = drive_service.get_processed_file(file_id)
+    if not file_data:
+        return RedirectResponse(url="/", status_code=status.HTTP_404_NOT_FOUND)
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(file_data.share_link)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    buffer.seek(0)
+
+    return StreamingResponse(buffer, media_type="image/png")
+
+
+@router.get("/", response_class=HTMLResponse, tags=["Sinkronisasi Status"])
+async def home():
+    """Landing page: shows sync status or prompts authorization."""
+    if auth_service.is_authorized():
+        latest_file_html = ""
+        latest = drive_service.get_latest_processed_file()
+
+        if latest:
+            qr_link = f"/qr/{latest.id}"
+            preview_link = latest.share_link
+
+            latest_file_html = f"""
+            <h3 class="text-xl font-semibold mb-4 text-gray-800">File Terakhir Diunggah:</h3>
+            <div class="flex flex-col md:flex-row items-stretch justify-center gap-6 p-6 border border-indigo-200 rounded-xl shadow-lg bg-white">
+                <div class="flex-1 flex flex-col items-center justify-center p-4 bg-indigo-50/50 rounded-lg">
+                    <p class="text-2xl font-bold mb-3 text-indigo-700 break-words text-center">{latest.name}</p>
+                    <p class="text-sm font-medium mb-1 text-gray-600">Diunggah pada: {latest.processed_time}</p>
+                    <p class="text-lg font-medium mt-3 mb-2 text-gray-800">Tautan Drive:</p>
+                    <a href="{preview_link}" target="_blank" class="text-blue-600 hover:text-blue-800 underline break-words text-center text-sm p-2 bg-white rounded-md border border-gray-200 w-full max-w-xs">
+                        {preview_link.split('//')[1].split('/')[0]}...
+                    </a>
+                </div>
+                <div class="flex-none flex flex-col items-center justify-center p-4 bg-white border border-gray-200 rounded-lg shadow-inner">
+                    <p class="text-md font-medium mb-3 text-gray-600">Scan untuk Akses:</p>
+                    <img src="{qr_link}" alt="QR Code untuk {latest.name}" class="w-48 h-48 border-4 border-gray-100 rounded-lg shadow-xl">
+                </div>
+            </div>
+            """
+        else:
+            latest_file_html = "<p class='mt-4 text-red-500'>Belum ada file yang diunggah sejak server dimulai.</p>"
+
+        history = drive_service.get_processed_files_history()
+        file_list_html = ""
+        if history:
+            file_list_html = "<ul class='space-y-2'>"
+            for file_id, data in history.items():
+                file_list_html += f"<li class='flex justify-between items-center text-sm'><span class='font-medium text-gray-700'>**{data.name}**</span><a href='{data.share_link}' target='_blank' class='text-xs text-blue-500 hover:text-blue-700 underline'>Link Drive</a></li>"
+            file_list_html += "</ul>"
+        else:
+            file_list_html = "<p class='text-sm text-gray-500'>Riwayat kosong.</p>"
+
+        return f"""
+        <html>
+            <head>
+                <title>Status Sinkronisasi Lokal -> Drive</title>
+                <script src="https://cdn.tailwindcss.com"></script>
+                <style>
+                    body {{ font-family: 'Inter', sans-serif; }}
+                </style>
+            </head>
+            <body class="bg-gray-50 min-h-screen">
+                <div class="max-w-4xl mx-auto p-6 lg:p-12">
+                    <h1 class="text-3xl font-bold mb-8 text-gray-900 border-b pb-3">FastAPI Local Drive Sync</h1>
+                    
+                    <div class="p-6 bg-green-50 border border-green-300 rounded-xl mb-10 shadow-md">
+                        <h2 class="text-xl font-semibold text-green-800">Status: Sudah Terotorisasi (Aktif)</h2>
+                        <p class="mt-2 text-sm text-green-700">Folder Lokal Diawasi: <code>{LOCAL_FOLDER_PATH}</code></p>
+                        <p class="text-sm text-green-700">Folder Drive Target: <code>{TARGET_FOLDER_ID}</code></p>
+                        <a href="/test-drive" class="mt-3 inline-block text-blue-600 hover:text-blue-800 text-sm font-medium">[Coba Panggil Drive API (Uji Koneksi)]</a>
+                    </div>
+                    
+                    {latest_file_html}
+
+                    <hr class="my-10 border-gray-300">
+
+                    <h3 class="text-xl font-semibold mb-4 text-gray-800">Riwayat Sinkronisasi (Sejak Server Dimulai):</h3>
+                    <div class="bg-white p-4 rounded-lg shadow-md max-h-60 overflow-y-auto border border-gray-100">
+                        {file_list_html}
+                    </div>
+                </div>
+            </body>
+        </html>
+        """
+
+    flow = auth_service.create_flow()
+    auth_url, _ = flow.authorization_url(prompt="consent")
+
+    return f"""
+    <html>
+        <head>
+            <title>Perlu Otorisasi</title>
+            <style>body{{font-family: sans-serif; padding: 20px;}}</style>
+        </head>
+        <body>
+            <h2>Perhatian: Aplikasi Perlu Izin Google Drive</h2>
+            <p>Klik tombol di bawah ini untuk memulai proses otorisasi. Ini hanya perlu dilakukan sekali.</p>
+            <a href="{auth_url}">
+                <button style="padding: 10px 20px; font-size: 16px; cursor: pointer;">
+                    Berikan Izin ke Google Drive
+                </button>
+            </a>
+            <p>Pastikan <code>client_secrets.json</code> dan folder lokal <code>{LOCAL_FOLDER_PATH}</code> sudah siap.</p>
+        </body>
+    </html>
+    """
+
+
+@router.get("/oauth2callback", tags=["Sinkronisasi Status"])
+async def oauth2callback(request: Request):
+    """Handle OAuth callback and persist refresh token."""
+    auth_service.handle_callback(str(request.url))
+    return RedirectResponse(url="/", status_code=status.HTTP_302_FOUND)
+
+
+@router.get("/test-drive", response_model=TestDriveResponse, tags=["Test"])
+async def test_drive_api():
+    """Simple health check against the Drive API."""
+    service = auth_service.get_drive_service()
+    if not service:
+        return TestDriveResponse(
+            status="error",
+            message="API Service belum terotorisasi atau dimuat.",
+        )
+
+    try:
+        results = (
+            service.files()
+            .list(pageSize=10, fields="nextPageToken, files(id, name, mimeType)")
+            .execute()
+        )
+
+        files = results.get("files", [])
+        return TestDriveResponse(
+            status="success",
+            message="Panggilan Drive API berhasil!",
+            first_10_files=[DriveFile(id=f["id"], name=f["name"], type=f["mimeType"]) for f in files],
+        )
+    except Exception as e:
+        return TestDriveResponse(status="error", message=f"Gagal memanggil Drive API: {e}")
+

@@ -109,7 +109,7 @@ onMounted(async () => {
 
     // URL file tersimpan di backend (after/result)
     state.resultAfterUrl = res.headers.get("X-After-Url");
-    state.resultFinalUrl = res.headers.get("X-Result-Url") || state.resultAfterUrl;
+    state.resultFinalUrl = null; // final/composited akan diisi saat saveResultImage di ResultPage
 
     const outBlob = await res.blob();
     const outUrl = URL.createObjectURL(outBlob);

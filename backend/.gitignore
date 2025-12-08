@@ -23,6 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 
+client_secrets.json
 venv
 __pycache__
 
@@ -32,3 +33,4 @@ static/*
 !static/captured/.gitkeep
 !static/after/.gitkeep
 !static/result/.gitkeep
+

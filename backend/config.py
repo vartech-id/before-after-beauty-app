@@ -45,3 +45,18 @@ FRONTEND_ORIGINS = os.getenv(
     "FRONTEND_ORIGINS",
     "http://localhost:5173,http://127.0.0.1:5173",
 ).split(",")
+
+# GDRIVE
+# Allow insecure transport for local development (http://localhost)
+os.environ.setdefault("OAUTHLIB_INSECURE_TRANSPORT", "1")
+
+# OAuth token persistence
+TOKEN_FILE = os.getenv("TOKEN_FILE", "token.json")
+CLIENT_SECRETS_FILE = os.getenv("CLIENT_SECRETS_FILE", "client_secrets.json")
+
+# OAuth scopes
+SCOPES = ["https://www.googleapis.com/auth/drive"]
+
+# Google Drive & local watcher defaults
+TARGET_FOLDER_ID = os.getenv("TARGET_FOLDER_ID", "1X8hHiiVRGVpY0yMwkuurfYVT7XoTsYS4")
+LOCAL_FOLDER_PATH = os.getenv("LOCAL_FOLDER_PATH", "../static/result")
