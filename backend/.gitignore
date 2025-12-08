@@ -34,3 +34,4 @@ static/*
 !static/after/.gitkeep
 !static/result/.gitkeep
 
+token.json

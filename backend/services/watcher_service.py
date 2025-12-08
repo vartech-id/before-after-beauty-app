@@ -6,8 +6,8 @@ from typing import Optional
 from watchdog.events import FileSystemEventHandler
 from watchdog.observers import Observer
 
-from config import LOCAL_FOLDER_PATH
-from services.drive_service import is_in_progress, mark_in_progress, upload_file_to_drive
+from backend.config import LOCAL_FOLDER_PATH
+from backend.services.drive_service import is_in_progress, mark_in_progress, upload_file_to_drive
 
 observer: Optional[Observer] = None
 MAIN_ASYNC_LOOP = None

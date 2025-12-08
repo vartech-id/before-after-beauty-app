@@ -14,12 +14,12 @@ from backend.services.beautify import beautify_image
 from backend.services.storage import save_image_lossless
 
 import qrcode
-from fastapi import APIRouter, Request, status
+from fastapi import Request, status
 from fastapi.responses import HTMLResponse, RedirectResponse, StreamingResponse
 
-from config import LOCAL_FOLDER_PATH, TARGET_FOLDER_ID
-from schemas.drive import DriveFile, TestDriveResponse
-from services import auth_service, drive_service
+from backend.config import LOCAL_FOLDER_PATH, TARGET_FOLDER_ID
+from backend.schemas.drive import DriveFile, TestDriveResponse
+from backend.services import auth_service, drive_service
 
 router = APIRouter(prefix="/api")
 
@@ -166,7 +166,25 @@ def render_result(req: RenderResultRequest):
     filename = save_image_lossless(canvas, RESULT_DIR, prefix="result")
     result_url = f"{API_BASE_URL.rstrip('/')}/static/result/{filename}"
 
-    return JSONResponse({"result_url": result_url})
+    return JSONResponse({"result_url": result_url, "file_name": filename})
+
+
+@router.get("/drive/latest")
+async def latest_drive_file():
+    """Get latest uploaded Drive file (from watcher uploads)."""
+    latest = drive_service.get_latest_processed_file()
+    if not latest:
+        raise HTTPException(status_code=404, detail="Belum ada file terunggah.")
+
+    qr_url = f"{API_BASE_URL.rstrip('/')}/api/qr/{latest.id}"
+    return {
+        "id": latest.id,
+        "name": latest.name,
+        "share_link": latest.share_link,
+        "download_link": latest.download_link,
+        "qr_url": qr_url,
+        "processed_time": latest.processed_time,
+    }
 
 @router.get("/qr/{file_id}", tags=["QR Code"], response_class=StreamingResponse)
 async def qr_code_generator(file_id: str):
@@ -321,4 +339,3 @@ async def test_drive_api():
         )
     except Exception as e:
         return TestDriveResponse(status="error", message=f"Gagal memanggil Drive API: {e}")
-

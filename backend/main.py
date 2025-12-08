@@ -1,15 +1,22 @@
 # backend/main.py
+import asyncio
+import json
+from pathlib import Path
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from pathlib import Path
 from PIL import Image
-import json
+from pydantic import BaseModel
 
 from backend.config import FRONTEND_ORIGINS, STATIC_DIR
 from backend.api.camera import router as camera_router
-from backend.api.routes import router as beauty_router   # 🔥 tambahkan ini
+from backend.api.routes import router as beauty_router  # /api endpoints
+from backend.services.watcher_service import (
+    set_main_async_loop,
+    start_local_watcher,
+    stop_local_watcher,
+)
 
 app = FastAPI()
 BASE_DIR = Path(__file__).resolve().parent
@@ -25,17 +32,32 @@ app.add_middleware(
 # Serve /static -> backend/static
 app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-# 🔥 daftar kedua router
-app.include_router(camera_router)   # /api/camera/...
-app.include_router(beauty_router)   # /api/beauty
+# Router
+app.include_router(camera_router)  # /api/camera/...
+app.include_router(beauty_router)  # /api/beauty, /api/render-result, etc.
+
+
+@app.on_event("startup")
+async def on_startup():
+    loop = asyncio.get_event_loop()
+    set_main_async_loop(loop)
+    start_local_watcher()
+
+
+@app.on_event("shutdown")
+async def on_shutdown():
+    stop_local_watcher()
+
 
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
 
+
 class RenderRequest(BaseModel):
-    photo_path: str      # path foto dari kamera
-    template_name: str   # misal "template1.json"
+    photo_path: str  # path foto dari kamera
+    template_name: str  # misal "template1.json"
+
 
 @app.post("/render")
 def render(req: RenderRequest):

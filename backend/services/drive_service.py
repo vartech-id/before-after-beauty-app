@@ -4,9 +4,9 @@ from typing import Dict, Optional
 
 from googleapiclient.http import MediaFileUpload
 
-from config import TARGET_FOLDER_ID
-from models.processed_file import ProcessedFile
-from services.auth_service import get_drive_service
+from backend.config import TARGET_FOLDER_ID
+from backend.models.processed_file import ProcessedFile
+from backend.services.auth_service import get_drive_service
 
 PROCESSED_FILES: Dict[str, ProcessedFile] = {}
 FILES_IN_PROGRESS: set[str] = set()

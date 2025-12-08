@@ -6,7 +6,7 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
-from config import CLIENT_SECRETS_FILE, SCOPES, TOKEN_FILE
+from backend.config import CLIENT_SECRETS_FILE, SCOPES, TOKEN_FILE, API_BASE_URL
 
 CREDENTIALS: Credentials | None = None
 DRIVE_SERVICE = None
@@ -32,8 +32,9 @@ def load_credentials() -> Optional[Credentials]:
 
 def create_flow() -> InstalledAppFlow:
     """Create an OAuth flow with a fixed redirect URI for the local FastAPI app."""
+    redirect_uri = f"{API_BASE_URL.rstrip('/')}/api/oauth2callback"
     return InstalledAppFlow.from_client_secrets_file(
-        CLIENT_SECRETS_FILE, SCOPES, redirect_uri="http://localhost:8000/oauth2callback"
+        CLIENT_SECRETS_FILE, SCOPES, redirect_uri=redirect_uri
     )
 
 

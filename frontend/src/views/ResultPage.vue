@@ -1,7 +1,7 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useSession } from "../stores/useSession";
-import { computed, onMounted, ref, watch } from "vue";
+import { computed, onMounted, ref } from "vue";
 import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png";
 import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png";
 import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png";
@@ -64,6 +64,10 @@ const overlayImageSrc = computed(() => {
 const saveStatus = ref("");
 const isSaving = ref(false);
 const autoSaveCompleted = ref(false); // Flag untuk menandai auto save sudah selesai
+const showQr = ref(false);
+const qrLoading = ref(false);
+const qrError = ref("");
+const qrData = ref(null);
 
 const loadTemplateLayout = () => {
   try {
@@ -147,6 +151,36 @@ const manualSaveResultImage = async () => {
   }
 };
 
+const openQrModal = async () => {
+  if (!state.resultFinalUrl) {
+    alert("Simpan hasil terlebih dahulu sebelum membuat QR.");
+    return;
+  }
+  qrLoading.value = true;
+  qrError.value = "";
+  qrData.value = null;
+  try {
+    const res = await fetch(`${API_BASE}/api/drive/latest`);
+    if (res.status === 404) {
+      qrError.value = "Belum ada file terunggah ke Drive. Tunggu upload selesai.";
+      return;
+    }
+    if (!res.ok) throw new Error(`Failed to fetch latest drive file: ${res.status}`);
+    const data = await res.json();
+    qrData.value = data;
+    showQr.value = true;
+  } catch (err) {
+    console.error("QR modal error:", err);
+    qrError.value = "Gagal memuat data QR.";
+  } finally {
+    qrLoading.value = false;
+  }
+};
+
+const closeQrModal = () => {
+  showQr.value = false;
+};
+
 onMounted(async () => {
   // Safety: kalau belum pilih product atau belum capture foto, balikin
   if (!state.selectedProduct || !state.photoUrl) {
@@ -205,12 +239,30 @@ const handleFinish = () => {
     </div>
 
     <div class="action-button">
-      <!-- <button @click="manualSaveResultImage" :disabled="isSaving || autoSaveCompleted">
-        {{ isSaving ? "Saving..." : (autoSaveCompleted ? "Already Saved" : "Save HD Result") }}
-      </button> -->
-      <!-- <span v-if="saveStatus && !isSaving" class="saveStatus">{{ saveStatus }}</span> -->
-      <button @click="">QR CODE</button>
+      <button
+        @click="manualSaveResultImage"
+        :disabled="isSaving || autoSaveCompleted"
+      >
+        {{ isSaving ? "Saving..." : autoSaveCompleted ? "Saved" : "Save HD Result" }}
+      </button>
+      <button @click="openQrModal" :disabled="qrLoading || !state.resultFinalUrl">
+        {{ qrLoading ? "Loading QR..." : "QR CODE" }}
+      </button>
       <button @click="handleFinish">Home</button>
+    </div>
+
+    <div v-if="qrError" class="qr-error">{{ qrError }}</div>
+
+    <div v-if="showQr && qrData" class="qr-modal">
+      <div class="qr-dialog">
+        <button class="close-btn" @click="closeQrModal">✕</button>
+        <h3>Link Google Drive</h3>
+        <p class="file-name">{{ qrData.name }}</p>
+        <a class="drive-link" :href="qrData.share_link" target="_blank">
+          {{ qrData.share_link }}
+        </a>
+        <img :src="qrData.qr_url" alt="QR Code" class="qr-image" />
+      </div>
     </div>
   </div>
 </template>
@@ -330,6 +382,75 @@ const handleFinish = () => {
 
 .saveStatus.error {
   color: #ef4444; /* Merah untuk error */
+}
+
+.qr-error {
+  color: #ef4444;
+  font-size: 13px;
+}
+
+.qr-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.qr-dialog {
+  position: relative;
+  background: #0f172a;
+  border: 1px solid #1f2937;
+  border-radius: 12px;
+  padding: 20px;
+  width: min(90%, 360px);
+  color: #e5e7eb;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+  text-align: center;
+}
+
+.qr-dialog h3 {
+  margin: 0 0 6px;
+  font-size: 18px;
+}
+
+.qr-dialog .file-name {
+  font-size: 14px;
+  color: #cbd5e1;
+  margin: 0 0 8px;
+}
+
+.qr-dialog .drive-link {
+  display: inline-block;
+  font-size: 13px;
+  color: #60a5fa;
+  word-break: break-all;
+  margin-bottom: 12px;
+}
+
+.qr-dialog .qr-image {
+  width: 220px;
+  height: 220px;
+  margin: 0 auto;
+  display: block;
+  background: #fff;
+  padding: 8px;
+  border-radius: 8px;
+}
+
+.qr-dialog .close-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #1f2937;
+  border: 1px solid #334155;
+  color: #e5e7eb;
+  border-radius: 50%;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
 }
 
 

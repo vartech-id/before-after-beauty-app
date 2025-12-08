@@ -24,3 +24,10 @@ def save_image_lossless(
     path = directory / filename
     image.save(path, format="PNG", compress_level=0)  # lossless
     return filename
+
+def save_image_jpeg(image, directory, prefix="result", quality=92):
+    directory.mkdir(parents=True, exist_ok=True)
+    filename = f"{prefix}_{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.jpg"
+    path = directory / filename
+    image.save(path, format="JPEG", quality=quality, subsampling=0, optimize=True, progressive=True)
+    return filename
