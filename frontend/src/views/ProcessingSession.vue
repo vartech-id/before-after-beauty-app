@@ -18,7 +18,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 // ====== CONFIG: minimal waktu user lihat loading (ms) ======
 const MS = 1000;
-const MIN_LOADING_S = MS * 13; // ubah ke detik
+const MIN_LOADING_S = MS * 10; // ubah ke detik
 
 // status
 const processingDone = ref(false);
@@ -54,19 +54,6 @@ const loadingImage = computed(() => {
       return "Error Animation";
   }
 });
-
-const imageOverlay = computed (() => {
-    switch (filterCode.value) {
-    case "MENCERAHKAN_KULIT":
-      return Overlay_Mencerahkan;
-    case "MENGURANGI_KERIPUT":
-      return Overlay_Mengurangi_Keriput;
-    case "MELEMBABKAN_KULIT":
-      return Overlay_Melembabkan;
-    default:
-      return "Error Overlay";
-  }
-})
 
 // helper: cek kapan boleh pindah ke ResultPage
 const maybeGoNext = () => {
@@ -126,19 +113,22 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="processing-wrapper">
+  <div class="page">
+    <div class="processing-wrapper">
     <div v-if="capturedPhotoUrl" class="photo-wrapper">
       <!-- Foto BEFORE -->
-      <img :src="capturedPhotoUrl" alt="Captured photo" class="photo" />
+      <img :src="capturedPhotoUrl" alt="Captured photo" class="camera-image" />
 
       <!-- GIF LOADING di atas foto -->
-      <img :src="loadingImage" alt="Processing..." class="overlay-gif" />
+      <img :src="loadingImage" class="overlay-gif" />
     </div>
 
     <p v-else>
       Tidak ada foto. Silakan kembali dan ambil foto terlebih dahulu.
     </p>
   </div>
+  </div>
+
 </template>
 
 <style scoped>
@@ -152,7 +142,6 @@ onMounted(async () => {
 /* wrapper foto jadi anchor untuk overlay */
 .photo-wrapper {
   position: relative;
-  max-width: 640px;
   width: 100%;
 }
 

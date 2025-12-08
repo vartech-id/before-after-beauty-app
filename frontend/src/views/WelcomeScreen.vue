@@ -1,16 +1,28 @@
 <script setup>
-import { useRouter } from 'vue-router'
+import { useRouter } from "vue-router";
 
-const router = useRouter()
-const goNext = () => router.push({ name: 'ProductSelections' })
+const router = useRouter();
+const goNext = () => router.push({ name: "ProductSelections" });
 </script>
 
 <template>
-    <h1>Welcome Screen</h1>
-<button @click="goNext">Touch to start</button>
-
+  <div class="page">
+        <img class="start-btn" src="./assets/start.png" alt="" @click="goNext">
+  </div>
 </template>
 
-<style scoped>
-
+<style>
+    .page{
+    height: 100vh;
+    background: url(./assets/bg.png);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    }
+    .start-btn{
+        width: 50%;
+        height: fit-content;
+        padding-top: 20em;
+    }
 </style>

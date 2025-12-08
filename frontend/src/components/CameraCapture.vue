@@ -76,12 +76,16 @@ const retakeCamera = () => {
   state.photoUrl = null              // 🔥 reset di session juga
   startCamera()
 }
-
 // ---------------------------------------------------------------------
 // Lifecycle
 // ---------------------------------------------------------------------
 onMounted(startCamera)
 onBeforeUnmount(stopCamera)
+
+defineExpose({
+  takePhoto,
+  retakeCamera,
+})
 
 </script>
 
@@ -94,7 +98,7 @@ onBeforeUnmount(stopCamera)
         v-if="!hasPhoto"
         :src="liveViewUrl"
         alt="Live view"
-        class="camera-image"
+        class="camera-live"
       />
 
       <!-- Jika sudah ada foto: tampilkan hasil capture -->
@@ -109,7 +113,7 @@ onBeforeUnmount(stopCamera)
     </div>
 
     <!-- Tombol -->
-    <button
+    <!-- <button
       v-if="!hasPhoto"
       class="btn"
       @click="takePhoto"
@@ -122,21 +126,31 @@ onBeforeUnmount(stopCamera)
       @click="retakeCamera"
     >
       Retake
-    </button>
+    </button> -->
   </div>
 </template>
 
-<style scoped>
+<style>
 .camera-frame {
-  max-width: 640px;   /* batasi lebar supaya tidak terlalu besar */
   width: 100%;
   margin: 0 auto;     /* center di tengah container */
+
+}
+
+.camera-live{
+  display: flex;
+  width: 100%;        /* isi lebar frame */
+  height: auto;       /* tinggi mengikuti rasio asli gambar */
+  margin: 0 auto; 
+    border-radius: 24px;
 }
 
 /* Pastikan rasio gambar terjaga, tidak gepeng */
 .camera-image {
-  display: block;
-  width: 100%;        /* isi lebar frame */
+  display: flex;
+  width: 90%;        /* isi lebar frame */
   height: auto;       /* tinggi mengikuti rasio asli gambar */
+  margin: 0 auto; 
+    border-radius: 24px;
 }
 </style>

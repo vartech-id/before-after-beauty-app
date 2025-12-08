@@ -29,7 +29,6 @@ const defaultLayout = () => ({
 const templateLayout = ref(defaultLayout());
 
 const canvasStyle = computed(() => ({
-  maxWidth: `${previewMaxWidth}px`,
   aspectRatio: `${canvasWidthPx} / ${canvasHeightPx}`,
 }));
 
@@ -40,9 +39,15 @@ const relToStyle = (rel) => ({
   height: `${rel.h * 100}%`,
 });
 
-const overlayStyle = computed(() => relToStyle(templateLayout.value.overlayRel));
-const beforeSlotStyle = computed(() => relToStyle(templateLayout.value.photo1Rel));
-const afterSlotStyle = computed(() => relToStyle(templateLayout.value.photo2Rel));
+const overlayStyle = computed(() =>
+  relToStyle(templateLayout.value.overlayRel)
+);
+const beforeSlotStyle = computed(() =>
+  relToStyle(templateLayout.value.photo1Rel)
+);
+const afterSlotStyle = computed(() =>
+  relToStyle(templateLayout.value.photo2Rel)
+);
 
 const productOverlayMap = {
   MENCERAHKAN_KULIT: Overlay_Mencerahkan,
@@ -98,7 +103,7 @@ const saveResultImage = async () => {
     alert("Foto before/after belum tersedia.");
     return false;
   }
-  
+
   isSaving.value = true;
   saveStatus.value = "";
   try {
@@ -162,10 +167,12 @@ const openQrModal = async () => {
   try {
     const res = await fetch(`${API_BASE}/api/drive/latest`);
     if (res.status === 404) {
-      qrError.value = "Belum ada file terunggah ke Drive. Tunggu upload selesai.";
+      qrError.value =
+        "Belum ada file terunggah ke Drive. Tunggu upload selesai.";
       return;
     }
-    if (!res.ok) throw new Error(`Failed to fetch latest drive file: ${res.status}`);
+    if (!res.ok)
+      throw new Error(`Failed to fetch latest drive file: ${res.status}`);
     const data = await res.json();
     qrData.value = data;
     showQr.value = true;
@@ -189,7 +196,7 @@ onMounted(async () => {
   }
 
   loadTemplateLayout();
-  
+
   // Auto save saat halaman dimuat
   await saveResultImage();
 });
@@ -200,7 +207,7 @@ const handleFinish = () => {
 };
 </script>
 <template>
-  <div class="resultPage">
+  <div class="page-last">
     <div class="resultWrapper">
       <div class="layoutCanvas" :style="canvasStyle">
         <div
@@ -211,7 +218,7 @@ const handleFinish = () => {
 
         <div class="slot beforeSlot" :style="beforeSlotStyle">
           <img v-if="state.photoUrl" :src="state.photoUrl" alt="Before" />
-          <span class="slotLabel">Before</span>
+          <!-- <span class="slotLabel">Before</span> -->
         </div>
 
         <div class="slot afterSlot" :style="afterSlotStyle">
@@ -220,7 +227,7 @@ const handleFinish = () => {
             :src="state.resultPhotoUrl"
             alt="After"
           />
-          <span class="slotLabel">After</span>
+          <!-- <span class="slotLabel">After</span> -->
         </div>
 
         <img
@@ -232,12 +239,17 @@ const handleFinish = () => {
         />
       </div>
     </div>
-    
-    <div class="status-indicator" v-if="isSaving || saveStatus || qrError || qrLoading">
+
+    <div
+      class="status-indicator"
+      v-if="isSaving || saveStatus || qrError || qrLoading"
+    >
       <span v-if="isSaving">⏳ Saving HD Result...</span>
       <span v-else-if="qrLoading">⏳ Uploading to Drive...</span>
       <span v-else-if="saveStatus" class="saveStatus">{{ saveStatus }}</span>
-      <span v-else-if="qrError" class="saveStatus error">Drive: {{ qrError }}</span>
+      <span v-else-if="qrError" class="saveStatus error"
+        >Drive: {{ qrError }}</span
+      >
     </div>
 
     <div class="action-button">
@@ -247,10 +259,20 @@ const handleFinish = () => {
       >
         {{ isSaving ? "Saving..." : autoSaveCompleted ? "Saved" : "Save HD Result" }}
       </button> -->
-      <button @click="openQrModal" :disabled="qrLoading || !state.resultFinalUrl">
-        {{ qrLoading ? "Loading QR..." : "QR CODE" }}
-      </button>
-      <button @click="handleFinish">Home</button>
+      <img
+        class="home-btn"
+        src="./assets/btn-home.png"
+        alt="home button"
+        @click="handleFinish"
+        :disabled="qrLoading || !state.resultFinalUrl"
+      />
+      <img
+        class="home-btn"
+        src="./assets/btn-qr.png"
+        alt="home button"
+        @click="openQrModal"
+        :disabled="qrLoading || !state.resultFinalUrl"
+      />
     </div>
 
     <div v-if="qrError" class="qr-error">{{ qrError }}</div>
@@ -270,14 +292,15 @@ const handleFinish = () => {
 </template>
 
 <style scoped>
-.resultPage {
-  min-height: 100vh;
+
+  .page-last{
+  height: 100vh;
+  background: url(./assets/bg-last.png);
   display: flex;
   flex-direction: column;
+  justify-content: center;
   align-items: center;
-  gap: 18px;
-  padding: 24px 16px 40px;
-}
+  }
 
 .resultWrapper {
   width: 100%;
@@ -287,10 +310,9 @@ const handleFinish = () => {
 
 .layoutCanvas {
   position: relative;
-  width: 100%;
-  max-width: 100%;
-  aspect-ratio: 2400 / 3600;
+  width: 80%;
   overflow: hidden;
+  margin-top: 15em;
 }
 
 .overlayFrame {
@@ -341,20 +363,13 @@ const handleFinish = () => {
 
 .action-button {
   display: flex;
-  gap: 12px;
+  gap: 3em;
   justify-content: center;
   align-items: center;
+  width: 130px;
+  padding-top: 4em;
 }
 
-.action-button button {
-  padding: 10px 16px;
-  border-radius: 10px;
-  border: 1px solid #1f2937;
-  background: #111827;
-  color: #e5e7eb;
-  cursor: pointer;
-  transition: transform 120ms ease, box-shadow 120ms ease;
-}
 
 .action-button button:hover {
   transform: translateY(-1px);
@@ -453,6 +468,4 @@ const handleFinish = () => {
   height: 28px;
   cursor: pointer;
 }
-
-
 </style>
