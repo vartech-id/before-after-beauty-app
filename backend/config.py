@@ -8,8 +8,14 @@ BASE_DIR = Path(__file__).resolve().parent
 # Static directory: backend/static
 STATIC_DIR = BASE_DIR / "static"
 
-# Folder untuk menyimpan hasil foto final: backend/static/photos
-PHOTO_OUTPUT_DIR = STATIC_DIR / "photos"
+# Folder untuk menyimpan hasil foto original dari kamera: backend/static/captured
+CAPTURED_DIR = STATIC_DIR / "captured"
+
+# Folder untuk menyimpan hasil filter (after) tanpa kompresi: backend/static/after
+AFTER_DIR = STATIC_DIR / "after"
+
+# Folder untuk menyimpan final result (jika ada post-processing lanjutan)
+RESULT_DIR = STATIC_DIR / "result"
 
 # Folder asli tempat digiCamControl menyimpan foto dari kamera
 # Default diset ke path yang kamu berikan, tapi bisa dioverride pakai env DIGICAM_ORIGINAL_DIR

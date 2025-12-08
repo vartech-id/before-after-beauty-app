@@ -107,6 +107,10 @@ onMounted(async () => {
       return;
     }
 
+    // URL file tersimpan di backend (after/result)
+    state.resultAfterUrl = res.headers.get("X-After-Url");
+    state.resultFinalUrl = res.headers.get("X-Result-Url") || state.resultAfterUrl;
+
     const outBlob = await res.blob();
     const outUrl = URL.createObjectURL(outBlob);
 

@@ -5,6 +5,8 @@ const state = reactive({
   selectedProduct: null,      // 'A' | 'B' | 'C'
   photoPath: null,            // kalau mau simpan nama file hasil capture
   resultPhotoUrl: null,  // AFTER (hasil /api/beauty)
+  resultAfterUrl: null,  // URL file tersimpan di backend/static/after
+  resultFinalUrl: null,  // URL file tersimpan di backend/static/result
 })
 
 const filterCode = computed(() => {
@@ -18,6 +20,9 @@ const filterCode = computed(() => {
 function clearSession() {
   state.selectedProduct = null
   state.photoUrl = null     // reset juga fotonya
+  state.resultPhotoUrl = null
+  state.resultAfterUrl = null
+  state.resultFinalUrl = null
   
 }
 

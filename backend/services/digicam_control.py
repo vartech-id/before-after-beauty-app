@@ -66,7 +66,7 @@ def capture_and_save_photo(original_dir: Path, output_dir: Path) -> str:
     """
     1. Trigger capture di digiCamControl (kamera jepret)
     2. Tunggu file baru muncul di folder original_dir (folder digiCamControl)
-    3. Copy file baru itu ke output_dir (backend/static/photos)
+    3. Copy file baru itu ke output_dir (backend/static/captured)
     4. Return nama file (bukan path lengkap)
 
     original_dir: folder tempat digiCamControl menyimpan foto asli

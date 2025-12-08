@@ -4,7 +4,7 @@ import io
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import StreamingResponse
 
-from backend.config import API_BASE_URL, PHOTO_OUTPUT_DIR, DIGICAM_ORIGINAL_DIR
+from backend.config import API_BASE_URL, CAPTURED_DIR, DIGICAM_ORIGINAL_DIR
 from backend.models.camera import CaptureResponse
 from backend.services.digicam_control import (
     get_preview_image,
@@ -56,16 +56,16 @@ def capture():
     """
     Trigger kamera jepret via digiCamControl, lalu:
     - Cari file terbaru di folder asli digiCamControl
-    - Copy ke backend/static/photos/
+    - Copy ke backend/static/captured/
     - Kembalikan URL ke file static tersebut
     """
     try:
-        filename = capture_and_save_photo(DIGICAM_ORIGINAL_DIR, PHOTO_OUTPUT_DIR)
+        filename = capture_and_save_photo(DIGICAM_ORIGINAL_DIR, CAPTURED_DIR)
     except Exception as exc:
         raise HTTPException(status_code=502, detail=f"Failed to capture and save photo: {exc}") from exc
 
     # Bangun URL absolute ke static file
-    # Contoh: http://localhost:8000/static/photos/20251202-134500_XXX.jpg
-    photo_url = f"{API_BASE_URL.rstrip('/')}/static/photos/{filename}"
+    # Contoh: http://localhost:8000/static/captured/20251202-134500_XXX.jpg
+    photo_url = f"{API_BASE_URL.rstrip('/')}/static/captured/{filename}"
 
     return CaptureResponse(photo_url=photo_url)
