@@ -235,7 +235,6 @@ const handleFinish = () => {
           :src="overlayImageSrc"
           class="overlayImage"
           :style="overlayStyle"
-          alt="Overlay"
         />
       </div>
     </div>
