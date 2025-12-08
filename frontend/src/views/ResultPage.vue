@@ -232,19 +232,21 @@ const handleFinish = () => {
         />
       </div>
     </div>
-
-    <div class="status-indicator" v-if="isSaving || saveStatus">
+    
+    <div class="status-indicator" v-if="isSaving || saveStatus || qrError || qrLoading">
       <span v-if="isSaving">⏳ Saving HD Result...</span>
-      <span v-else class="saveStatus">{{ saveStatus }}</span>
+      <span v-else-if="qrLoading">⏳ Uploading to Drive...</span>
+      <span v-else-if="saveStatus" class="saveStatus">{{ saveStatus }}</span>
+      <span v-else-if="qrError" class="saveStatus error">Drive: {{ qrError }}</span>
     </div>
 
     <div class="action-button">
-      <button
+      <!-- <button
         @click="manualSaveResultImage"
         :disabled="isSaving || autoSaveCompleted"
       >
         {{ isSaving ? "Saving..." : autoSaveCompleted ? "Saved" : "Save HD Result" }}
-      </button>
+      </button> -->
       <button @click="openQrModal" :disabled="qrLoading || !state.resultFinalUrl">
         {{ qrLoading ? "Loading QR..." : "QR CODE" }}
       </button>
@@ -256,11 +258,11 @@ const handleFinish = () => {
     <div v-if="showQr && qrData" class="qr-modal">
       <div class="qr-dialog">
         <button class="close-btn" @click="closeQrModal">✕</button>
-        <h3>Link Google Drive</h3>
-        <p class="file-name">{{ qrData.name }}</p>
+        <h3>Scan To Download</h3>
+        <!-- <p class="file-name">{{ qrData.name }}</p>
         <a class="drive-link" :href="qrData.share_link" target="_blank">
           {{ qrData.share_link }}
-        </a>
+        </a> -->
         <img :src="qrData.qr_url" alt="QR Code" class="qr-image" />
       </div>
     </div>
@@ -294,7 +296,6 @@ const handleFinish = () => {
 .overlayFrame {
   position: absolute;
   z-index: 4;
-  border: 1px dashed rgba(148, 163, 184, 0.8);
   border-radius: 10px;
   pointer-events: none;
   background: rgba(255, 255, 255, 0.02);
@@ -422,13 +423,13 @@ const handleFinish = () => {
   margin: 0 0 8px;
 }
 
-.qr-dialog .drive-link {
+/* .qr-dialog .drive-link {
   display: inline-block;
   font-size: 13px;
   color: #60a5fa;
   word-break: break-all;
   margin-bottom: 12px;
-}
+} */
 
 .qr-dialog .qr-image {
   width: 220px;
