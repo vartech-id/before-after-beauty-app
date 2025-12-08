@@ -2,12 +2,17 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel
+from pathlib import Path
+from PIL import Image
+import json
 
 from backend.config import FRONTEND_ORIGINS, STATIC_DIR
 from backend.api.camera import router as camera_router
 from backend.api.routes import router as beauty_router   # 🔥 tambahkan ini
 
 app = FastAPI()
+BASE_DIR = Path(__file__).resolve().parent
 
 app.add_middleware(
     CORSMiddleware,
@@ -27,3 +32,38 @@ app.include_router(beauty_router)   # /api/beauty
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+class RenderRequest(BaseModel):
+    photo_path: str      # path foto dari kamera
+    template_name: str   # misal "template1.json"
+
+@app.post("/render")
+def render(req: RenderRequest):
+    tpl_path = BASE_DIR / "templates" / req.template_name
+    with open(tpl_path, "r", encoding="utf-8") as f:
+        tpl = json.load(f)
+
+    canvas_w = tpl["canvas"]["width"]
+    canvas_h = tpl["canvas"]["height"]
+    canvas = Image.new("RGBA", (canvas_w, canvas_h), (255, 255, 255, 255))
+
+    photo = Image.open(BASE_DIR / req.photo_path).convert("RGBA")
+
+    # contoh: cuma pakai 1 slot kamera
+    slot = tpl["camera_slots"][0]
+    x = int(slot["x_rel"] * canvas_w)
+    y = int(slot["y_rel"] * canvas_h)
+    w = int(slot["w_rel"] * canvas_w)
+    h = int(slot["h_rel"] * canvas_h)
+
+    photo_resized = photo.resize((w, h), Image.LANCZOS)
+    canvas.alpha_composite(photo_resized, dest=(x, y))
+
+    # TODO: loop overlays di tpl["overlays"] kalau ada
+
+    out_dir = BASE_DIR / "outputs"
+    out_dir.mkdir(exist_ok=True)
+    out_path = out_dir / "result.png"
+    canvas.save(out_path, format="PNG")
+
+    return {"status": "ok", "output": str(out_path.relative_to(BASE_DIR))}
