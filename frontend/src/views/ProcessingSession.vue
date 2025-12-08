@@ -7,10 +7,6 @@ import loading_A from "./assets/LoadingAnimation/loading-a.gif";
 import loading_B from "./assets/LoadingAnimation/loading-b.gif";
 import loading_C from "./assets/LoadingAnimation/loading-c.gif";
 
-import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png"
-import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png"
-import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png"
-
 const router = useRouter();
 const { state, filterCode } = useSession();
 
