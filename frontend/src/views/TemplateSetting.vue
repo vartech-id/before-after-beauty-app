@@ -1,7 +1,11 @@
 <!-- src/pages/TemplateSetting.vue -->
 <script setup>
 import { ref, computed, onMounted } from "vue";
+import { useRouter } from "vue-router";
+import { useSession } from "../stores/useSession";
 
+const router = useRouter();
+const {clearSession } = useSession();
 /* ============================
    CANVAS: 4x6 VERTICAL @ 600dpi
    ============================ */
@@ -733,6 +737,12 @@ const photo2Xpx = computed(() => Math.round(photo2Rel.value.x * canvasWidthPx));
 const photo2Ypx = computed(() =>
   Math.round(photo2Rel.value.y * canvasHeightPx)
 );
+
+const handleHome = () => {
+  clearSession(); // reset pilihan & data sesi
+  router.push({ name: "WelcomeScreen" }); // balik ke awal
+};
+
 </script>
 
 <template>
@@ -749,6 +759,7 @@ const photo2Ypx = computed(() =>
         </div>
         <div class="header-actions">
           <button class="save-btn" @click="saveTemplate">Save layout</button>
+          <button class="home-btn" @click="handleHome">Home</button>
           <span v-if="saveStatus" class="save-status">
             {{ saveStatus }}
           </span>
@@ -1147,6 +1158,16 @@ const photo2Ypx = computed(() =>
   border-radius: 6px;
   border: 1px solid #22c55e;
   background: #16a34a;
+  color: #ecfdf5;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.home-btn {
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid #22c55e;
+  background: #003cff;
   color: #ecfdf5;
   font-size: 12px;
   cursor: pointer;
