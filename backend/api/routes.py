@@ -11,7 +11,7 @@ from PIL import Image
 from backend.config import AFTER_DIR, RESULT_DIR, API_BASE_URL, STATIC_DIR
 from backend.models.presets import VALID_PRESETS
 from backend.services.beautify import beautify_image
-from backend.services.storage import save_image_lossless
+from backend.services.storage import save_image_lossless, save_image_jpeg
 
 import qrcode
 from fastapi import Request, status
@@ -163,7 +163,8 @@ def render_result(req: RenderResultRequest):
             overlay_resized = overlay_img.resize((w, h), Image.LANCZOS)
             canvas.alpha_composite(overlay_resized, dest=(x, y))
 
-    filename = save_image_lossless(canvas, RESULT_DIR, prefix="result")
+    # Simpan versi share-friendly (JPEG) di folder result
+    filename = save_image_jpeg(canvas, RESULT_DIR, prefix="result", quality=92)
     result_url = f"{API_BASE_URL.rstrip('/')}/static/result/{filename}"
 
     return JSONResponse({"result_url": result_url, "file_name": filename})

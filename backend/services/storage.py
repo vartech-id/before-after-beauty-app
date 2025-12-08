@@ -29,5 +29,7 @@ def save_image_jpeg(image, directory, prefix="result", quality=92):
     directory.mkdir(parents=True, exist_ok=True)
     filename = f"{prefix}_{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}.jpg"
     path = directory / filename
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     image.save(path, format="JPEG", quality=quality, subsampling=0, optimize=True, progressive=True)
     return filename
