@@ -6,6 +6,8 @@ import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png";
 import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png";
 import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png";
 
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 const router = useRouter();
 const { state, clearSession, filterCode } = useSession();
 
@@ -59,6 +61,9 @@ const overlayImageSrc = computed(() => {
   return null;
 });
 
+const saveStatus = ref("");
+const isSaving = ref(false);
+
 const loadTemplateLayout = () => {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -97,6 +102,52 @@ const handleFinish = () => {
   clearSession(); // reset pilihan & data sesi
   router.push({ name: "WelcomeScreen" }); // balik ke awal
 };
+
+const saveResultImage = async () => {
+  if (!state.photoUrl || !state.resultAfterUrl) {
+    alert("Foto before/after belum tersedia.");
+    return;
+  }
+  isSaving.value = true;
+  saveStatus.value = "";
+  try {
+    const res = await fetch(`${API_BASE}/api/render-result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        before_url: state.photoUrl,
+        after_url: state.resultAfterUrl,
+        overlay_enabled: templateLayout.value.overlayEnabled,
+        overlay_mode: templateLayout.value.overlayMode,
+        overlay_src:
+          templateLayout.value.overlayMode === "template"
+            ? templateLayout.value.overlaySrc
+            : null,
+        overlay_rel: templateLayout.value.overlayRel,
+        photo1_rel: templateLayout.value.photo1Rel,
+        photo2_rel: templateLayout.value.photo2Rel,
+        filter_code: filterCode.value,
+        canvas_width: canvasWidthPx,
+        canvas_height: canvasHeightPx,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Save failed: ${res.status}`);
+    }
+    const data = await res.json();
+    state.resultFinalUrl = data.result_url;
+    saveStatus.value = "Saved to result";
+  } catch (err) {
+    console.error("Save result error:", err);
+    saveStatus.value = "Save failed";
+  } finally {
+    isSaving.value = false;
+    setTimeout(() => {
+      saveStatus.value = "";
+    }, 2000);
+  }
+};
 </script>
 
 <template>
@@ -134,6 +185,10 @@ const handleFinish = () => {
     </div>
 
     <div class="action-button">
+      <button @click="saveResultImage" :disabled="isSaving">
+        {{ isSaving ? "Saving..." : "Save HD Result" }}
+      </button>
+      <span v-if="saveStatus" class="saveStatus">{{ saveStatus }}</span>
       <button @click="">QR CODE</button>
       <button @click="handleFinish">Home</button>
     </div>
@@ -215,6 +270,27 @@ const handleFinish = () => {
   display: flex;
   gap: 12px;
   justify-content: center;
+  align-items: center;
+}
+
+.action-button button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  border: 1px solid #1f2937;
+  background: #111827;
+  color: #e5e7eb;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.action-button button:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.25);
+}
+
+.saveStatus {
+  font-size: 12px;
+  color: #a5b4fc;
 }
 
 </style>

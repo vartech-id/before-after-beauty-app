@@ -3,6 +3,7 @@ import { reactive, computed } from 'vue'
 
 const state = reactive({
   selectedProduct: null,      // 'A' | 'B' | 'C'
+  photoUrl: null,             // URL foto hasil capture (static/captured)
   photoPath: null,            // kalau mau simpan nama file hasil capture
   resultPhotoUrl: null,  // AFTER (hasil /api/beauty)
   resultAfterUrl: null,  // URL file tersimpan di backend/static/after
