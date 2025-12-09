@@ -2,6 +2,7 @@
 import { useRouter } from "vue-router";
 import { computed, onMounted, ref } from "vue";
 import { useSession } from "../stores/useSession";
+import { preloadImages } from "../utils/preloadImages.js";
 
 import loading_A from "./assets/LoadingAnimation/loading-a.webp";
 import loading_B from "./assets/LoadingAnimation/loading-b.webp";
@@ -59,6 +60,9 @@ const maybeGoNext = () => {
 };
 
 onMounted(async () => {
+  // Ensure the high-res loading animations are decoded before we show them.
+  preloadImages([loading_A, loading_B, loading_C]);
+
   if (!state.photoUrl || !presetName.value) {
     router.push({ name: "PhotoSession" });
     return;
@@ -115,8 +119,14 @@ onMounted(async () => {
       <!-- Foto BEFORE -->
       <img :src="capturedPhotoUrl" alt="Captured photo" class="camera-image" />
 
-      <!-- GIF LOADING di atas foto -->
-      <img :src="loadingImage" class="overlay-webp" />
+      <!-- WEBP LOADING di atas foto -->
+      <img
+        :src="loadingImage"
+        class="overlay-webp"
+        loading="eager"
+        fetchpriority="high"
+        decoding="async"
+      />
     </div>
 
     <p v-else>
@@ -128,6 +138,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+  .page{
+    height: 100vh;
+    background: url(./assets/bg-last.png);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
 .processing-wrapper {
   display: flex;
   flex-direction: column;

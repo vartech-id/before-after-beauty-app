@@ -5,6 +5,7 @@ import PhotoSession from '../views/PhotoSession.vue'
 import ProcessingSession from '../views/ProcessingSession.vue'
 import ResultPage from '../views/ResultPage.vue'
 import TemplateSetting from '../views/TemplateSetting.vue'
+import SkinSetting from '../views/SkinSetting.vue'
 
 const routes = [
   { path: '/', name: 'WelcomeScreen', component: WelcomeScreen },
@@ -13,7 +14,7 @@ const routes = [
   { path: '/processing-session' , name: 'ProcessingSession', component: ProcessingSession},
   { path: '/result' , name: 'ResultPage', component: ResultPage},
   { path: '/template-setting' , name: 'TemplateSetting', component: TemplateSetting},
-
+  { path: '/skin-setting' , name: 'SkinSetting', component: SkinSetting},
 ]
 
 const router = createRouter({
