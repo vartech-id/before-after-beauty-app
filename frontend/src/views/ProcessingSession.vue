@@ -4,8 +4,8 @@ import { computed, onMounted, ref } from "vue";
 import { useSession } from "../stores/useSession";
 
 import loading_A from "./assets/LoadingAnimation/loading-a.webp";
-import loading_B from "./assets/LoadingAnimation/loading-b.gif";
-import loading_C from "./assets/LoadingAnimation/loading-c.gif";
+import loading_B from "./assets/LoadingAnimation/loading-b.webp";
+import loading_C from "./assets/LoadingAnimation/loading-c.webp";
 
 const router = useRouter();
 const { state, filterCode } = useSession();
@@ -14,7 +14,7 @@ const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 // ====== CONFIG: minimal waktu user lihat loading (ms) ======
 const MS = 1000;
-const MIN_LOADING_S = MS * 10; // ubah ke detik
+const MIN_LOADING_S = MS * 14; // ubah ke detik
 
 // status
 const processingDone = ref(false);
