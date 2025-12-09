@@ -1,6 +1,6 @@
 <script setup>
 import { useRouter } from "vue-router";
-import { computed, onMounted, ref } from "vue";
+import { computed, onMounted, onBeforeUnmount, ref, watch } from "vue";
 import { useSession } from "../stores/useSession";
 import { preloadImages } from "../utils/preloadImages.js";
 
@@ -20,6 +20,9 @@ const MIN_LOADING_S = MS * 14; // ubah ke detik
 // status
 const processingDone = ref(false);
 const minTimePassed = ref(false);
+const loadingReady = ref(false);
+const loadingObjectUrl = ref(null);
+const loadingKey = ref(0);
 
 // URL foto hasil capture (BEFORE)
 const capturedPhotoUrl = computed(() => state.photoUrl);
@@ -52,6 +55,26 @@ const loadingImage = computed(() => {
   }
 });
 
+const prepareLoadingAnimation = async (src) => {
+  if (!src) return;
+  loadingReady.value = false;
+
+  try {
+    const res = await fetch(src, { cache: "force-cache" });
+    const blob = await res.blob();
+    if (loadingObjectUrl.value) {
+      URL.revokeObjectURL(loadingObjectUrl.value);
+    }
+    loadingObjectUrl.value = URL.createObjectURL(blob);
+    loadingKey.value += 1; // ensure fresh playback starting at frame 0
+    loadingReady.value = true;
+  } catch (err) {
+    console.warn("Failed to prepare loading animation:", err);
+    loadingObjectUrl.value = null;
+    loadingReady.value = true; // show fallback src even if blob fails
+  }
+};
+
 // helper: cek kapan boleh pindah ke ResultPage
 const maybeGoNext = () => {
   if (processingDone.value && minTimePassed.value) {
@@ -60,8 +83,8 @@ const maybeGoNext = () => {
 };
 
 onMounted(async () => {
-  // Ensure the high-res loading animations are decoded before we show them.
-  preloadImages([loading_A, loading_B, loading_C]);
+  // Preload only B/C; A should start exactly when the page mounts.
+  preloadImages([loading_B, loading_C]);
 
   if (!state.photoUrl || !presetName.value) {
     router.push({ name: "PhotoSession" });
@@ -73,6 +96,9 @@ onMounted(async () => {
     minTimePassed.value = true;
     maybeGoNext();
   }, MIN_LOADING_S);
+
+  // ---- 1b) siapkan animasi loading dari blob agar mulai dari frame pertama ----
+  await prepareLoadingAnimation(loadingImage.value);
 
   // ---- 2) proses ke backend ----
   try {
@@ -110,6 +136,18 @@ onMounted(async () => {
     alert("Terjadi error saat memproses foto.");
   }
 });
+
+// Siapkan animasi jika filter berubah sebelum masuk halaman
+watch(
+  () => loadingImage.value,
+  (src) => prepareLoadingAnimation(src)
+);
+
+onBeforeUnmount(() => {
+  if (loadingObjectUrl.value) {
+    URL.revokeObjectURL(loadingObjectUrl.value);
+  }
+});
 </script>
 
 <template>
@@ -121,7 +159,9 @@ onMounted(async () => {
 
       <!-- WEBP LOADING di atas foto -->
       <img
-        :src="loadingImage"
+        v-if="loadingReady"
+        :key="loadingKey"
+        :src="loadingObjectUrl || loadingImage"
         class="overlay-webp"
         loading="eager"
         fetchpriority="high"

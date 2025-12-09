@@ -433,14 +433,17 @@ const handleFinish = () => {
 
 .qr-dialog {
   position: relative;
-  background: #0f172a;
+  background:  #0096A9;
   border: 1px solid #1f2937;
   border-radius: 12px;
-  padding: 20px;
-  width: min(90%, 360px);
+  width: 50%;
+  height: 30%;
   color: #e5e7eb;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .qr-dialog h3 {
@@ -463,8 +466,8 @@ const handleFinish = () => {
 } */
 
 .qr-dialog .qr-image {
-  width: 220px;
-  height: 220px;
+  width: 400px;
+  height: 400px;
   margin: 0 auto;
   display: block;
   background: #fff;
