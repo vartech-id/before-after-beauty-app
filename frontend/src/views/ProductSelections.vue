@@ -36,7 +36,12 @@ const goNext = () => {
             v-model="selectedOption"
             class="hidden-radio"
           />
-          <img src="./assets/ULTIMATE-VIBRANT.png" alt="Mencerahkan Kulit" />
+          <img
+            src="./assets/ULTIMATE-VIBRANT.png"
+            alt="Mencerahkan Kulit"
+            loading="eager"
+            decoding="async"
+          />
         </label>
 
         <!-- Card C -->
@@ -47,7 +52,12 @@ const goNext = () => {
             v-model="selectedOption"
             class="hidden-radio"
           />
-          <img src="./assets/BIO-E.png" alt="Melembabkan Kulit" />
+          <img
+            src="./assets/BIO-E.png"
+            alt="Melembabkan Kulit"
+            loading="eager"
+            decoding="async"
+          />
         </label>        
 
         <!-- Card B -->
@@ -58,11 +68,16 @@ const goNext = () => {
             v-model="selectedOption"
             class="hidden-radio"
           />
-          <img src="./assets/ULTIMATE-RADIANCE.png" alt="Mengurangi Garis Halus" />
+          <img
+            src="./assets/ULTIMATE-RADIANCE.png"
+            alt="Mengurangi Garis Halus"
+            loading="eager"
+            decoding="async"
+          />
         </label>
 
       </div>
-      <img class="next-btn" src="./assets/next.png" alt="next-button" @click="goNext" />
+      <img class="next-btn" src="./assets/next.png" alt="next-button" @click="goNext" loading="eager" decoding="async" />
     </div>
   </div>
 </template>
