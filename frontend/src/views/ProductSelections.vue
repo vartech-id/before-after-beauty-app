@@ -39,17 +39,6 @@ const goNext = () => {
           <img src="./assets/ULTIMATE-VIBRANT.png" alt="Mencerahkan Kulit" />
         </label>
 
-        <!-- Card B -->
-        <label class="product-card" :class="{ active: selectedOption === 'B' }">
-          <input
-            type="radio"
-            value="B"
-            v-model="selectedOption"
-            class="hidden-radio"
-          />
-          <img src="./assets/ULTIMATE-RADIANCE.png" alt="Mencerahkan Kulit" />
-        </label>
-
         <!-- Card C -->
         <label class="product-card" :class="{ active: selectedOption === 'C' }">
           <input
@@ -58,8 +47,20 @@ const goNext = () => {
             v-model="selectedOption"
             class="hidden-radio"
           />
-          <img src="./assets/BIO-E.png" alt="Mencerahkan Kulit" />
+          <img src="./assets/BIO-E.png" alt="Melembabkan Kulit" />
+        </label>        
+
+        <!-- Card B -->
+        <label class="product-card product-card-garis-halus" :class="{ active: selectedOption === 'B' }">
+          <input
+            type="radio"
+            value="B"
+            v-model="selectedOption"
+            class="hidden-radio"
+          />
+          <img src="./assets/ULTIMATE-RADIANCE.png" alt="Mengurangi Garis Halus" />
         </label>
+
       </div>
       <img class="next-btn" src="./assets/next.png" alt="next-button" @click="goNext" />
     </div>
@@ -101,6 +102,10 @@ const goNext = () => {
   padding: 12px;
   transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
   border: 2px solid transparent;   /* default: tidak kelihatan */
+}
+
+.product-card-garis-halus{
+  padding-top: 1.1em;
 }
 
 .product-card.active {

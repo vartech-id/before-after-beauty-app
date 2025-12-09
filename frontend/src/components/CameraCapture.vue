@@ -94,12 +94,18 @@ defineExpose({
     <!-- Frame untuk live view / hasil foto -->
     <div class="camera-frame">
       <!-- Jika belum ada foto: tampilkan live view -->
+       <div class="live-view-wrapper"  v-if="!hasPhoto"> 
       <img
-        v-if="!hasPhoto"
         :src="liveViewUrl"
         alt="Live view"
         class="camera-live"
       />
+      <img
+        src="../assets/siluet.png"
+        alt="Silhouette"
+        class="overlay-siluet"
+      />      
+      </div>
 
       <!-- Jika sudah ada foto: tampilkan hasil capture -->
       <img
@@ -142,7 +148,7 @@ defineExpose({
   width: 100%;        /* isi lebar frame */
   height: auto;       /* tinggi mengikuti rasio asli gambar */
   margin: 0 auto; 
-    border-radius: 24px;
+  border-radius: 24px;
 }
 
 /* Pastikan rasio gambar terjaga, tidak gepeng */
@@ -152,5 +158,11 @@ defineExpose({
   height: auto;       /* tinggi mengikuti rasio asli gambar */
   margin: 0 auto; 
     border-radius: 24px;
+}
+
+.overlay-siluet{
+  position: absolute;
+  top: 33.5em;
+  left: 0;
 }
 </style>
