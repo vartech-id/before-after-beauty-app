@@ -2,7 +2,7 @@ import cv2
 import numpy as np
 from PIL import Image
 
-from backend.models.presets import PRESET_CONFIGS
+from backend.models.presets import PRESET_CONFIGS, PresetConfig
 from backend.services.converters import pil_to_cv, cv_to_pil
 from backend.services.face_detection import detect_face_and_landmarks
 from backend.services.filters import apply_unsharp_mask, boost_saturation
@@ -15,7 +15,11 @@ from backend.services.masks import (
 )
 
 
-def beautify_image(img_pil: Image.Image, preset: str) -> Image.Image:
+def beautify_image(
+    img_pil: Image.Image,
+    preset: str,
+    config_override: PresetConfig | None = None,
+) -> Image.Image:
     """
     Core retouch pipeline:
     - Face detection and landmarks
@@ -23,7 +27,7 @@ def beautify_image(img_pil: Image.Image, preset: str) -> Image.Image:
     - Frequency separation smoothing
     - Preset-specific adjustments
     """
-    config = PRESET_CONFIGS.get(preset)
+    config = config_override or PRESET_CONFIGS.get(preset)
     if config is None:
         return img_pil
 

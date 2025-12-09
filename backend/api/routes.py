@@ -1,15 +1,16 @@
 import base64
+import json
 import io
 from pathlib import Path
 
 import requests
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Request
 from fastapi.responses import Response, JSONResponse
 from pydantic import BaseModel
 from PIL import Image
 
 from backend.config import AFTER_DIR, RESULT_DIR, API_BASE_URL, STATIC_DIR
-from backend.models.presets import VALID_PRESETS
+from backend.models.presets import VALID_PRESETS, as_dict_map, merge_config, update_preset
 from backend.services.beautify import beautify_image
 from backend.services.storage import save_image_lossless, save_image_jpeg
 
@@ -22,6 +23,75 @@ from backend.schemas.drive import DriveFile, TestDriveResponse
 from backend.services import auth_service, drive_service
 
 router = APIRouter(prefix="/api")
+
+
+class PresetUpdateRequest(BaseModel):
+    target_L: float | None = None
+    max_delta_L: float | None = None
+    smooth_strength: float | None = None
+    eye_smooth_strength: float | None = None
+    glow_strength: float | None = None
+    saturation_boost: float | None = None
+    hydration_highlight: float | None = None
+    wrinkle_soften: float | None = None
+    detail_mix: float | None = None
+    unsharp_amount: float | None = None
+    unsharp_radius: float | None = None
+    edge_enhance_mix: float | None = None
+
+
+@router.get("/presets")
+async def list_presets():
+    """Return all current preset values."""
+    return {"presets": as_dict_map()}
+
+
+@router.post("/presets/preview")
+async def preset_preview(request: Request):
+    """
+    Accept multipart form (image, preset, config) and return a JPEG preview.
+    Using manual form parsing to avoid UTF-8 decode issues when binary is malformed.
+    """
+    form = await request.form()
+
+    image = form.get("image")
+    preset_key = str(form.get("preset") or "").lower()
+    config_raw = form.get("config") or ""
+
+    if not image:
+        raise HTTPException(status_code=400, detail="Field 'image' wajib diisi (file).")
+    if preset_key not in VALID_PRESETS:
+        raise HTTPException(status_code=400, detail="Preset tidak dikenal")
+
+    try:
+        overrides = json.loads(config_raw) if config_raw else {}
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="Config harus JSON yang valid")
+
+    try:
+        contents = await image.read()
+        img = Image.open(io.BytesIO(contents)).convert("RGB")
+    except Exception:
+        raise HTTPException(status_code=400, detail="File gambar tidak valid")
+
+    merged_cfg = merge_config(preset_key, overrides)
+    out_img = beautify_image(img, preset_key, config_override=merged_cfg)
+
+    buffer = io.BytesIO()
+    out_img.save(buffer, format="JPEG", quality=95)
+    buffer.seek(0)
+
+    return Response(content=buffer.read(), media_type="image/jpeg")
+
+
+@router.post("/presets/{preset}")
+async def save_preset(preset: str, payload: PresetUpdateRequest):
+    preset_key = preset.lower()
+    if preset_key not in VALID_PRESETS:
+        raise HTTPException(status_code=400, detail="Preset tidak dikenal")
+
+    updated_cfg = update_preset(preset_key, payload.dict(exclude_none=True))
+    return {"preset": preset_key, "config": as_dict_map()[preset_key]}
 
 
 @router.post("/beauty")

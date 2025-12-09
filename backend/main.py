@@ -3,11 +3,13 @@ import asyncio
 import json
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from PIL import Image
 from pydantic import BaseModel
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from backend.config import FRONTEND_ORIGINS, STATIC_DIR
 from backend.api.camera import router as camera_router
@@ -35,6 +37,27 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 # Router
 app.include_router(camera_router)  # /api/camera/...
 app.include_router(beauty_router)  # /api/beauty, /api/render-result, etc.
+
+
+def _scrub_bytes(payload):
+    """Replace raw bytes in validation errors so UTF-8 decode never crashes."""
+    if isinstance(payload, (bytes, bytearray)):
+        return f"<{len(payload)} bytes>"
+    if isinstance(payload, dict):
+        return {k: _scrub_bytes(v) for k, v in payload.items()}
+    if isinstance(payload, list):
+        return [_scrub_bytes(v) for v in payload]
+    return payload
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    try:
+        print(f"[ValidationError] path={request.url.path} errors={exc.errors()}")
+    except Exception:
+        pass
+    safe_detail = _scrub_bytes(exc.errors())
+    return JSONResponse(status_code=422, content={"detail": safe_detail})
 
 
 @app.on_event("startup")

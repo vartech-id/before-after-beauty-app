@@ -1,5 +1,7 @@
-from dataclasses import dataclass
-from typing import Dict
+import json
+from dataclasses import asdict, dataclass
+from pathlib import Path
+from typing import Dict, Mapping
 
 
 @dataclass(frozen=True)
@@ -65,4 +67,73 @@ PRESET_CONFIGS: Dict[str, PresetConfig] = {
 
 VALID_PRESETS = set(PRESET_CONFIGS.keys())
 
-__all__ = ["PresetConfig", "PRESET_CONFIGS", "VALID_PRESETS"]
+OVERRIDES_PATH = Path(__file__).with_name("preset_overrides.json")
+
+
+def as_dict_map() -> Dict[str, Dict[str, float]]:
+    """Return presets as plain dict for JSON responses."""
+    return {name: asdict(cfg) for name, cfg in PRESET_CONFIGS.items()}
+
+
+def merge_config(preset: str, overrides: Mapping[str, float] | None = None) -> PresetConfig:
+    """
+    Merge a preset with optional overrides, returning a new PresetConfig.
+    Unknown keys are ignored; missing keys fall back to base preset.
+    """
+    base = PRESET_CONFIGS.get(preset)
+    if base is None:
+        raise KeyError(f"Preset not found: {preset}")
+
+    data = asdict(base)
+    if overrides:
+        for key, val in overrides.items():
+            if key in data and val is not None:
+                data[key] = float(val)
+    return PresetConfig(**data)
+
+
+def update_preset(preset: str, overrides: Mapping[str, float]) -> PresetConfig:
+    """
+    Update a preset in memory and persist it for future runs.
+    """
+    new_cfg = merge_config(preset, overrides)
+    PRESET_CONFIGS[preset] = new_cfg
+    save_overrides()
+    return new_cfg
+
+
+def save_overrides() -> None:
+    """Persist the current presets to a JSON file."""
+    try:
+        payload = as_dict_map()
+        OVERRIDES_PATH.write_text(json.dumps(payload, indent=2))
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to write preset overrides: {exc}")
+
+
+def load_overrides() -> None:
+    """Load persisted overrides, if any."""
+    if not OVERRIDES_PATH.exists():
+        return
+    try:
+        data = json.loads(OVERRIDES_PATH.read_text())
+        for name, cfg in data.items():
+            if name in PRESET_CONFIGS:
+                PRESET_CONFIGS[name] = PresetConfig(**cfg)
+    except Exception as exc:  # noqa: BLE001
+        print(f"Failed to load preset overrides: {exc}")
+
+
+# Load persisted tweaks on import so the main app uses the latest values.
+load_overrides()
+
+__all__ = [
+    "PresetConfig",
+    "PRESET_CONFIGS",
+    "VALID_PRESETS",
+    "as_dict_map",
+    "merge_config",
+    "update_preset",
+    "save_overrides",
+    "load_overrides",
+]

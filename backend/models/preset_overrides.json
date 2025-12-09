@@ -1,0 +1,44 @@
+{
+  "cerah": {
+    "target_L": 166.0,
+    "max_delta_L": 20.0,
+    "smooth_strength": 0.24,
+    "eye_smooth_strength": 0.18,
+    "glow_strength": 0.1,
+    "saturation_boost": 1.06,
+    "hydration_highlight": 0.0,
+    "wrinkle_soften": 0.0,
+    "detail_mix": 0.14,
+    "unsharp_amount": 0.06,
+    "unsharp_radius": 1.2,
+    "edge_enhance_mix": 0.7
+  },
+  "lembab": {
+    "target_L": 158.0,
+    "max_delta_L": 18.0,
+    "smooth_strength": 0.47,
+    "eye_smooth_strength": 0.4,
+    "glow_strength": 0.18,
+    "saturation_boost": 1.1,
+    "hydration_highlight": 0.3,
+    "wrinkle_soften": 0.0,
+    "detail_mix": 0.1,
+    "unsharp_amount": 0.05,
+    "unsharp_radius": 1.0,
+    "edge_enhance_mix": 0.55
+  },
+  "kerutan": {
+    "target_L": 153.0,
+    "max_delta_L": 12.0,
+    "smooth_strength": 0.38,
+    "eye_smooth_strength": 0.77,
+    "glow_strength": 0.05,
+    "saturation_boost": 1.02,
+    "hydration_highlight": 0.07,
+    "wrinkle_soften": 2.0,
+    "detail_mix": 0.11,
+    "unsharp_amount": 0.04,
+    "unsharp_radius": 1.0,
+    "edge_enhance_mix": 0.5
+  }
+}
