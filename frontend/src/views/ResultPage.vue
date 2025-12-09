@@ -1,10 +1,12 @@
 <script setup>
 import { useRouter } from "vue-router";
 import { useSession } from "../stores/useSession";
-import { computed, onMounted, ref } from "vue";
-import Overlay_Mencerahkan from "./assets/Overlay/overlay_mencerahkan.png";
-import Overlay_Mengurangi_Keriput from "./assets/Overlay/overlay_keriput.png";
-import Overlay_Melembabkan from "./assets/Overlay/overlay_melembabkan.png";
+import { computed, onMounted, ref, watch } from "vue";
+import { preloadImages } from "../utils/preloadImages.js";
+import {
+  logicOverlayMap,
+  logicOverlayUrls,
+} from "../constants/overlays.js";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
@@ -49,22 +51,21 @@ const afterSlotStyle = computed(() =>
   relToStyle(templateLayout.value.photo2Rel)
 );
 
-const productOverlayMap = {
-  MENCERAHKAN_KULIT: Overlay_Mencerahkan,
-  MENGURANGI_KERIPUT: Overlay_Mengurangi_Keriput,
-  MELEMBABKAN_KULIT: Overlay_Melembabkan,
-};
-
 const overlayImageSrc = computed(() => {
   if (!templateLayout.value.overlayEnabled) return null;
   if (templateLayout.value.overlayMode === "logic") {
-    return productOverlayMap[filterCode.value] || null;
+    return logicOverlayMap[filterCode.value] || null;
   }
   if (templateLayout.value.overlayMode === "template") {
     return templateLayout.value.overlaySrc || null;
   }
   return null;
 });
+
+const warmOverlayImages = (extra = []) => {
+  // Preload all possible overlays plus any dynamic/template source.
+  preloadImages([...logicOverlayUrls, ...extra].filter(Boolean));
+};
 
 const saveStatus = ref("");
 const isSaving = ref(false);
@@ -196,10 +197,23 @@ onMounted(async () => {
   }
 
   loadTemplateLayout();
+  warmOverlayImages([templateLayout.value.overlaySrc]);
 
   // Auto save saat halaman dimuat
   await saveResultImage();
 });
+
+watch(
+  () => templateLayout.value.overlaySrc,
+  (src) => warmOverlayImages([src])
+);
+
+watch(
+  () => filterCode.value,
+  (code) => warmOverlayImages([logicOverlayMap[code]])
+);
+
+watch(overlayImageSrc, (src) => preloadImages([src]));
 
 const handleFinish = () => {
   clearSession(); // reset pilihan & data sesi
@@ -235,6 +249,9 @@ const handleFinish = () => {
           :src="overlayImageSrc"
           class="overlayImage"
           :style="overlayStyle"
+          loading="eager"
+          fetchpriority="high"
+          decoding="async"
         />
       </div>
     </div>

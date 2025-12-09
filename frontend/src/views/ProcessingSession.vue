@@ -3,7 +3,7 @@ import { useRouter } from "vue-router";
 import { computed, onMounted, ref } from "vue";
 import { useSession } from "../stores/useSession";
 
-import loading_A from "./assets/LoadingAnimation/loading-a.gif";
+import loading_A from "./assets/LoadingAnimation/loading-a.webp";
 import loading_B from "./assets/LoadingAnimation/loading-b.gif";
 import loading_C from "./assets/LoadingAnimation/loading-c.gif";
 
@@ -116,7 +116,7 @@ onMounted(async () => {
       <img :src="capturedPhotoUrl" alt="Captured photo" class="camera-image" />
 
       <!-- GIF LOADING di atas foto -->
-      <img :src="loadingImage" class="overlay-gif" />
+      <img :src="loadingImage" class="overlay-webp" />
     </div>
 
     <p v-else>
@@ -148,12 +148,10 @@ onMounted(async () => {
 }
 
 /* GIF full overlay di atas foto */
-.overlay-gif {
+.overlay-webp {
   position: absolute;
-  inset: 0;           /* top/right/bottom/left: 0 */
+  top: -636px;
   width: 100%;
-  height: 100%;
-  object-fit: contain; /* atau 'cover' kalau mau nutup penuh */
   pointer-events: none;
 }
 </style>
