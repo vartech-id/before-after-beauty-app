@@ -27,8 +27,6 @@ client_secrets.json
 venv
 __pycache__
 
-# Ignore semua file hasil foto
-static/*
 # Tapi tetap simpan file placeholder (kalau kamu pakai)
 !static/captured/.gitkeep
 !static/after/.gitkeep
